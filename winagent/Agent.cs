@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
+using CommandLine;
 
 using plugin;
 
@@ -19,8 +20,7 @@ namespace winagent
             Assembly consoleAssembly = Assembly.GetExecutingAssembly();
             List<PluginDefinition> pluginList = LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(consoleAssembly);
 
-            // Console.WriteLine("Available Plugins:");
-            // pluginList.ForEach(t => Console.WriteLine(((PluginAttribute)t.Attribute).PluginName));
+            var result = Parser.Default.ParseArguments<Options>(args);
 
             if (args[0] == "service")
             {
