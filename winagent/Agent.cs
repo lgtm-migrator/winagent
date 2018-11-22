@@ -15,46 +15,56 @@ namespace winagent
     {
         static JObject config;
 
+        // Entrypoint
         static void Main(string[] args)
+        {
+            // Parse CommandLine options
+            // https://github.com/commandlineparser/commandline
+            var options = Parser.Default.ParseArguments<Options>(args);
+
+            // Call to overloaded Main method
+            options.WithParsed(opts => Main(opts));
+        }
+
+        // Overloaded Main method with parsed pptions
+        static void Main(Options options)
+        {
+            if (options.Service)
+            {
+                //TODO: Change absolute path
+                config = JObject.Parse(File.ReadAllText(@"config.json"));
+                ExecuteService();
+            }
+            else
+            {
+                ExecutePlugin((String[]) options.Input,(String[]) options.Output, new String[] { "table" });
+            }
+
+            // Prevents the test console from closing itself
+            //Console.ReadKey();
+        }
+
+        // Executes the windows service 
+        public static void ExecuteService()
         {
             Assembly consoleAssembly = Assembly.GetExecutingAssembly();
             List<PluginDefinition> pluginList = LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(consoleAssembly);
 
-            var result = Parser.Default.ParseArguments<Options>(args);
-
-            if (args[0] == "service")
-            {
-                //TODO: Change absolute path
-                config = JObject.Parse(File.ReadAllText(@"C:\Users\epuentes\Projects\nframework\winagent\winagent\config.json"));
-                ExecuteService(pluginList);
-            }
-            else
-            {
-                ExecutePlugin(pluginList, "Updates", "Console", args);
-            }
-
-            // Prevents the test console from closing itself
-            Console.ReadKey();
-        }
-
-        // Executes the windows service 
-        public static void ExecuteService(List<PluginDefinition> plugins)
-        {
             foreach (JProperty input in ((JObject) config["input"]).Properties())
             {
-                PluginDefinition inputPluginMetadata = plugins.Where(t => ((PluginAttribute)t.Attribute).PluginName == input.Name).First();
+                PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                 IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
 
                 foreach (JProperty output in ((JObject)input.Value).Properties())
                 {
-                    PluginDefinition outputPluginMetadata = plugins.Where(t => ((PluginAttribute)t.Attribute).PluginName == output.Name).First();
+                    PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
                     IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
 
-                    TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["args"].ToObject<string[]>());
+                    TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
                     
                     Timer testimer = new Timer(ExecuteTask, task, 1000, CalculateTime());
                     
-                    outputPlugin.Execute(inputPlugin.Execute(), output.Value["args"].ToObject<string[]>());
+                    outputPlugin.Execute(inputPlugin.Execute(), output.Value["options"].ToObject<string[]>());
                 }
             }
                             
@@ -75,15 +85,27 @@ namespace winagent
 
 
         // Selects the specified plugin and executes it   
-        public static void ExecutePlugin(List<PluginDefinition> plugins, string input, string output, string[] options)
+        public static void ExecutePlugin(String[] inputs, String[] outputs, String[] options)
         {
-            PluginDefinition inputPluginMetadata = plugins.Where(t => ((PluginAttribute)t.Attribute).PluginName == input).First();
-            PluginDefinition outputPluginMetadata = plugins.Where(t => ((PluginAttribute)t.Attribute).PluginName == output).First();
+            Assembly consoleAssembly = Assembly.GetExecutingAssembly();
+            List<PluginDefinition> pluginList = LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(consoleAssembly);
 
-            IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-            IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+            foreach (String input in inputs)
+            {
+                PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.ToLower()).First();
+                IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+                string inputResult = inputPlugin.Execute();
+
+                foreach (String output in outputs)
+                {
+                    PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.ToLower()).First();
+
+                    IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
             
-            outputPlugin.Execute(inputPlugin.Execute(), options);
+                    outputPlugin.Execute(inputResult, options);
+                }
+            }
+
         }
 
 
