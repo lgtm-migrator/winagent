@@ -29,26 +29,40 @@ namespace winagent
         // Overloaded Main method with parsed pptions
         static void Main(Options options)
         {
+            // Load plugins after parse options
+            List<PluginDefinition> pluginList = LoadPlugins();
+            
             if (options.Service)
             {
                 //TODO: Change absolute path
                 config = JObject.Parse(File.ReadAllText(@"config.json"));
-                ExecuteService();
+                ExecuteService(pluginList);
             }
             else
             {
-                ExecutePlugin((String[]) options.Input,(String[]) options.Output, new String[] { "table" });
+                ExecutePlugin(pluginList, (String[]) options.Input,(String[]) options.Output, new String[] { "table" });
             }
 
             // Prevents the test console from closing itself
             //Console.ReadKey();
         }
 
-        // Executes the windows service 
-        public static void ExecuteService()
+        public static List<PluginDefinition> LoadPlugins()
         {
-            Assembly consoleAssembly = Assembly.GetExecutingAssembly();
-            List<PluginDefinition> pluginList = LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(consoleAssembly);
+            List<PluginDefinition> pluginList = new List<PluginDefinition>();
+
+            foreach (String path in Directory.GetFiles("plugins"))
+            {
+                Assembly plugin = Assembly.LoadFrom(path);
+                pluginList.AddRange(LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(plugin));
+            }
+
+            return pluginList;
+        }
+
+        // Executes the windows service 
+        public static void ExecuteService(List<PluginDefinition> pluginList)
+        {
 
             foreach (JProperty input in ((JObject) config["input"]).Properties())
             {
@@ -85,11 +99,8 @@ namespace winagent
 
 
         // Selects the specified plugin and executes it   
-        public static void ExecutePlugin(String[] inputs, String[] outputs, String[] options)
+        public static void ExecutePlugin(List<PluginDefinition> pluginList, String[] inputs, String[] outputs, String[] options)
         {
-            Assembly consoleAssembly = Assembly.GetExecutingAssembly();
-            List<PluginDefinition> pluginList = LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(consoleAssembly);
-
             foreach (String input in inputs)
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.ToLower()).First();
