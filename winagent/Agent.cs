@@ -34,9 +34,11 @@ namespace winagent
             
             if (options.Service)
             {
-                //TODO: Change absolute path
-                config = JObject.Parse(File.ReadAllText(@"config.json"));
-                ExecuteService(pluginList);
+                ServiceManager.Install(new string[] { });
+
+
+                //config = JObject.Parse(File.ReadAllText(@"config.json"));
+                //ExecuteService(pluginList);
             }
             else
             {
