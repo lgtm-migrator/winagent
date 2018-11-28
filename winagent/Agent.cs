@@ -44,9 +44,10 @@ namespace winagent
             }
 
             // Prevents the test console from closing itself
-            //Console.ReadKey();
+            // Console.ReadKey();
         }
 
+        // Load plugin assemblies
         public static List<PluginDefinition> LoadPlugins()
         {
             List<PluginDefinition> pluginList = new List<PluginDefinition>();
