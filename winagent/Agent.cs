@@ -6,6 +6,7 @@ using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
 using CommandLine;
+using System.ServiceProcess;
 
 using plugin;
 
@@ -15,39 +16,32 @@ namespace winagent
     {
         static JObject config;
 
-        // Entrypoint
-        static void Main(string[] args)
+        #region Nested classes to support running as service
+        public class Service : ServiceBase
         {
-            // Parse CommandLine options
-            // https://github.com/commandlineparser/commandline
-            var options = Parser.Default.ParseArguments<Options>(args);
-
-            // Call to overloaded Main method
-            options.WithParsed(opts => Main(opts));
-        }
-
-        // Overloaded Main method with parsed pptions
-        static void Main(Options options)
-        {
-            // Load plugins after parse options
-            List<PluginDefinition> pluginList = LoadPlugins();
-            
-            if (options.Service)
+            public Service()
             {
-                ServiceManager.Install(new string[] { });
-
-
-                //config = JObject.Parse(File.ReadAllText(@"config.json"));
-                //ExecuteService(pluginList);
-            }
-            else
-            {
-                ExecutePlugin(pluginList, (String[]) options.Input,(String[]) options.Output, new String[] { "table" });
+                ServiceName = "Winagent";
             }
 
-            // Prevents the test console from closing itself
-            // Console.ReadKey();
+            protected override void OnStart(string[] args)
+            {
+
+                Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+                // Load plugins after parse options
+                List<PluginDefinition> pluginList = Agent.LoadPlugins();
+
+                config = JObject.Parse(File.ReadAllText(@"config.json"));
+                Agent.ExecuteService(pluginList, config);
+            }
+
+            protected override void OnStop()
+            {
+                //Stop();
+            }
         }
+        #endregion
 
         // Load plugin assemblies
         public static List<PluginDefinition> LoadPlugins()
@@ -64,7 +58,7 @@ namespace winagent
         }
 
         // Executes the windows service 
-        public static void ExecuteService(List<PluginDefinition> pluginList)
+        public static void ExecuteService(List<PluginDefinition> pluginList, JObject config)
         {
 
             foreach (JProperty input in ((JObject) config["input"]).Properties())

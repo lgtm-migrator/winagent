@@ -7,14 +7,14 @@ using System.Linq;
 
 namespace winagent
 {
-    class ServiceManager
+    class SrvInstaller
     {
         // Uninstall the service if it exists and install it again
         public static void Install(string[] args)
         {
             try
             {
-                using (AssemblyInstaller installer = new AssemblyInstaller(typeof(Agent).Assembly, args))
+                using (AssemblyInstaller installer = new AssemblyInstaller("winagent.exe", args))
                 {
                     IDictionary state = new Hashtable();
                     installer.UseNewContext = true;
@@ -37,6 +37,7 @@ namespace winagent
                         }
                         catch(Exception e)
                         {
+                            Console.Write(e);
                             throw e;
                         }
                     }
@@ -44,6 +45,8 @@ namespace winagent
             }
             catch (Exception ex)
             {
+                Console.Write(ex);
+
                 Console.Error.WriteLine(ex.Message);
             }
         }
@@ -54,7 +57,8 @@ namespace winagent
     {
         public WinagentInstallerProcess()
         {
-            this.Account = ServiceAccount.NetworkService;
+            //this.Account = ServiceAccount.NetworkService;
+            this.Account = ServiceAccount.LocalSystem;
         }
     }
 
