@@ -19,6 +19,10 @@ namespace winagent
         #region Nested classes to support running as service
         public class Service : ServiceBase
         {
+            // Thread control
+            private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
+            private Thread _thread;
+
             public Service()
             {
                 ServiceName = "Winagent";
@@ -26,19 +30,31 @@ namespace winagent
 
             protected override void OnStart(string[] args)
             {
-
-                Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
-
-                // Load plugins after parse options
-                List<PluginDefinition> pluginList = Agent.LoadPlugins();
-
-                config = JObject.Parse(File.ReadAllText(@"config.json"));
-                Agent.ExecuteService(pluginList, config);
+                _thread = new Thread(Excecution);
+                _thread.Name = "Winagent thread";
+                _thread.IsBackground = true;
+                _thread.Start();
             }
 
             protected override void OnStop()
             {
-                //Stop();
+                // Set flag to finalize thread
+                _shutdownEvent.Set();
+
+                // Give the thread 3 seconds to stop
+                if (!_thread.Join(3000))
+                { 
+                    _thread.Abort();
+                }
+            }
+
+            private void Excecution()
+            {
+                // Checks if the thread should continue
+                while (!_shutdownEvent.WaitOne(0))
+                {
+                    ExecuteService();
+                }
             }
         }
         #endregion
@@ -58,8 +74,16 @@ namespace winagent
         }
 
         // Executes the windows service 
-        public static void ExecuteService(List<PluginDefinition> pluginList, JObject config)
+        public static void ExecuteService()
         {
+            // Set current directory as base directory
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            // Load plugins after parse options
+            List<PluginDefinition> pluginList = Agent.LoadPlugins();
+
+            // Read config file
+            config = JObject.Parse(File.ReadAllText(@"config.json"));
 
             foreach (JProperty input in ((JObject) config["input"]).Properties())
             {
@@ -78,7 +102,6 @@ namespace winagent
                     outputPlugin.Execute(inputPlugin.Execute(), output.Value["options"].ToObject<string[]>());
                 }
             }
-                            
         }
 
         // Executes a task
@@ -96,7 +119,7 @@ namespace winagent
 
 
         // Selects the specified plugin and executes it   
-        public static void ExecutePlugin(List<PluginDefinition> pluginList, String[] inputs, String[] outputs, String[] options)
+        public static void ExecuteCommand(List<PluginDefinition> pluginList, String[] inputs, String[] outputs, String[] options)
         {
             foreach (String input in inputs)
             {

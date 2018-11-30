@@ -37,10 +37,12 @@ namespace winagent
                 {
                     ServiceBase.Run(service);
                 }
+                
+                
             }
             else
             {
-                //Agent.ExecutePlugin(pluginList, (String[])options.Input, (String[])options.Output, new String[] { "table" });
+                //Agent.ExecuteCommand(pluginList, (String[])options.Input, (String[])options.Output, new String[] { "table" });
             }
 
             // Prevents the test console from closing itself
