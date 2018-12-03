@@ -8,7 +8,7 @@ namespace winagent
     {
         // Options
 
-        [Option('s', "service", Default = true, HelpText = "Run as a service.")]
+        [Option('s', "service", Default = false, HelpText = "Run as a service.")]
         public Boolean Service { get; set; }
 
         [Option('i', "input", Separator = ',', Default = new string[] { "updates" }, HelpText = "Input plugins separated by comma.")]

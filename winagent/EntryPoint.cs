@@ -29,20 +29,23 @@ namespace winagent
         // Overloaded Main method with parsed options
         static void Main(Options options)
         {
-            if (options.Service)
+            if (Environment.UserInteractive)
             {
-                SrvInstaller.Install(new string[] { });
-
+                if (options.Service)
+                {
+                    SrvInstaller.Install(new string[] { });
+                }
+                else
+                {
+                    Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
+                }
+            }
+            else
+            {
                 using (var service = new Agent.Service())
                 {
                     ServiceBase.Run(service);
                 }
-                
-                
-            }
-            else
-            {
-                //Agent.ExecuteCommand(pluginList, (String[])options.Input, (String[])options.Output, new String[] { "table" });
             }
 
             // Prevents the test console from closing itself

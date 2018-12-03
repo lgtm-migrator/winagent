@@ -119,8 +119,14 @@ namespace winagent
 
 
         // Selects the specified plugin and executes it   
-        public static void ExecuteCommand(List<PluginDefinition> pluginList, String[] inputs, String[] outputs, String[] options)
+        public static void ExecuteCommand(String[] inputs, String[] outputs, String[] options)
         {
+            // Set current directory as base directory
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            // Load plugins after parse options
+            List<PluginDefinition> pluginList = Agent.LoadPlugins();
+
             foreach (String input in inputs)
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.ToLower()).First();
