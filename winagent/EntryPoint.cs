@@ -1,12 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using plugin;
-using Newtonsoft.Json.Linq;
 using CommandLine;
-using System.IO;
 using System.ServiceProcess;
 
 namespace winagent
@@ -18,27 +11,16 @@ namespace winagent
         // Entrypoint
         static void Main(string[] args)
         {
-            // Parse CommandLine options
-            // https://github.com/commandlineparser/commandline
-            var options = Parser.Default.ParseArguments<Options>(args);
 
-            // Call to overloaded Main method
-            options.WithParsed(opts => Main(opts));
-        }
-
-        // Overloaded Main method with parsed options
-        static void Main(Options options)
-        {
             if (Environment.UserInteractive)
             {
-                if (options.Service)
-                {
-                    SrvInstaller.Install(new string[] { });
-                }
-                else
-                {
-                    Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
-                }
+                // Parse CommandLine options
+                // https://github.com/commandlineparser/commandline
+                var options = Parser.Default.ParseArguments<CommandOptions, ServiceOptions>(args);
+
+                // Call the right method
+                options.WithParsed<CommandOptions>(opts => Command(opts));
+                options.WithParsed<ServiceOptions>(opts => Service(opts));
             }
             else
             {
@@ -48,8 +30,34 @@ namespace winagent
                 }
             }
 
-            // Prevents the test console from closing itself
-            // Console.ReadKey();
+            
+        }
+
+        // Overloaded Main method with parsed options
+        static void Command(CommandOptions options)
+        {
+            Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
+        }
+
+        // Overloaded Main method with parsed options
+        static void Service(ServiceOptions options)
+        {
+            if (options.Install)
+            {
+                ServiceManager.Install();
+            }
+            else if (options.Uninstall)
+            {
+                ServiceManager.Uninstall();
+            }
+            else if (options.Start)
+            {
+                ServiceManager.Start();
+            }
+            else if (options.Stop)
+            {
+                ServiceManager.Stop();
+            }
         }
     }
 }
