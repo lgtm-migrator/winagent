@@ -27,7 +27,6 @@ namespace winagent
         #region Nested class to support running as service
         public class Service : ServiceBase
         {
-            
             public Service()
             {
                 ServiceName = "Winagent";
@@ -35,6 +34,7 @@ namespace winagent
                 // Set current directory as base directory
                 Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             }
+
 
             protected override void OnStart(string[] args)
             {
@@ -74,6 +74,7 @@ namespace winagent
         }
         #endregion
 
+
         // Load plugin assemblies
         public static List<PluginDefinition> LoadPlugins()
         {
@@ -87,6 +88,7 @@ namespace winagent
 
             return pluginList;
         }
+
         
         // Calculates the iteration time based in the config file
         public static int CalculateTime(int hours, int minutes, int seconds)
@@ -107,6 +109,7 @@ namespace winagent
                 Console.WriteLine(e);
             }
         }
+
 
         public static void ExecuteConfig(string path = @"config.json")
         {
@@ -171,7 +174,6 @@ namespace winagent
                     outputPlugin.Execute(inputResult, options);
                 }
             }
-
         }
 
 
