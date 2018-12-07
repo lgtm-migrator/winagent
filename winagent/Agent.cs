@@ -101,7 +101,6 @@ namespace winagent
             try
             {
                 ((TaskObject)state).Execute();
-                System.GC.Collect();
             }
             catch(Exception e)
             {
