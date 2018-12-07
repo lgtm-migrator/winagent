@@ -5,8 +5,10 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using CommandLine;
 using System.ServiceProcess;
+using System.Diagnostics;
 
 using plugin;
 
@@ -16,7 +18,10 @@ namespace winagent
     {
         static JObject config;
 
-        #region Nested classes to support running as service
+        // TODO: This is a reference to avoid the timer removal (garbage collector), it needs to be changed
+        static Timer timer;
+
+        #region Nested class to support running as service
         public class Service : ServiceBase
         {
             // Thread control
@@ -97,30 +102,45 @@ namespace winagent
 
                     TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
                     
-                    Timer testimer = new Timer(ExecuteTask, task, 1000, CalculateTime());
-                    
-                    outputPlugin.Execute(inputPlugin.Execute(), output.Value["options"].ToObject<string[]>());
+                    timer = new Timer(
+                        new TimerCallback(ExecuteTask), 
+                        task, 
+                        0, 
+                        CalculateTime(
+                            output.Value["hours"].ToObject<int>(), 
+                            output.Value["minutes"].ToObject<int>(), 
+                            output.Value["seconds"].ToObject<int>()
+                        )
+                    );
                 }
             }
         }
 
-        // Executes a task
-        public static int CalculateTime()
+        // Calculates the iteration time based in the config file
+        public static int CalculateTime(int hours, int minutes, int seconds)
         {
-            return 1000;
+            return hours * 3600000 + minutes * 60000 + seconds * 1000;
         }
 
 
         // Executes a task
         public static void ExecuteTask(object state)
         {
-            
+            try
+            {
+                ((TaskObject)state).Execute();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
 
         // Selects the specified plugin and executes it   
-        public static void ExecuteCommand(String[] inputs, String[] outputs, String[] options)
+        public static void ExecuteCommand(String[] inputs, String[] outputs, String[] options = null)
         {
+            //options = new String[] { "epuentes-rabbitmq", "test", "test", "pcitcda30" };
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 

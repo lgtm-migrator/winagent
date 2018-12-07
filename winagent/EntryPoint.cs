@@ -30,13 +30,21 @@ namespace winagent
                 }
             }
 
-            
+            //  Console.ReadKey();
         }
 
         // Overloaded Main method with parsed options
         static void Command(CommandOptions options)
         {
-            Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
+            if (options.ConfigFile != null)
+            {
+                Agent.ExecuteService();
+                Console.ReadKey();
+            }
+            else
+            {
+                Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
+            }
         }
 
         // Overloaded Main method with parsed options
