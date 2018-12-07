@@ -39,7 +39,7 @@ namespace winagent
             if (options.ConfigFile != null)
             {
                 // Execute with config
-
+                Agent.ExecuteConfig();
                 Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
