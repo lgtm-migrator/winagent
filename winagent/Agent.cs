@@ -5,8 +5,10 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
+using System.Threading.Tasks;
 using CommandLine;
 using System.ServiceProcess;
+using System.Diagnostics;
 
 using plugin;
 
@@ -16,48 +18,62 @@ namespace winagent
     {
         static JObject config;
 
-        #region Nested classes to support running as service
+        /// <summary>List to keep a reference of each task
+        /// <para>Keeping a reference avoid the timers to be garbage collected</para>
+        /// <seealso cref="https://stackoverflow.com/questions/18136735/can-timers-get-automatically-garbage-collected"/>
+        /// </summary>
+        static List<Timer> timersReference;
+
+        #region Nested class to support running as service
         public class Service : ServiceBase
         {
-            // Thread control
-            private ManualResetEvent _shutdownEvent = new ManualResetEvent(false);
-            private Thread _thread;
-
             public Service()
             {
                 ServiceName = "Winagent";
+
+                // Set current directory as base directory
+                Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
             }
+
 
             protected override void OnStart(string[] args)
             {
-                _thread = new Thread(Excecution);
-                _thread.Name = "Winagent thread";
-                _thread.IsBackground = true;
-                _thread.Start();
-            }
+                // Create reference List
+                timersReference = new List<Timer>();
 
-            protected override void OnStop()
-            {
-                // Set flag to finalize thread
-                _shutdownEvent.Set();
+                // Load plugins after parse options
+                List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
-                // Give the thread 3 seconds to stop
-                if (!_thread.Join(3000))
-                { 
-                    _thread.Abort();
-                }
-            }
+                // Read config file
+                config = JObject.Parse(File.ReadAllText(@"config.json"));
 
-            private void Excecution()
-            {
-                // Checks if the thread should continue
-                while (!_shutdownEvent.WaitOne(0))
+                foreach (JProperty input in ((JObject)config["input"]).Properties())
                 {
-                    ExecuteService();
+                    PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
+                    IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+
+                    foreach (JProperty output in ((JObject)input.Value).Properties())
+                    {
+                        PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
+                        IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+
+                        TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
+
+                        Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
+                            output.Value["hours"].ToObject<int>(),
+                            output.Value["minutes"].ToObject<int>(),
+                            output.Value["seconds"].ToObject<int>()
+                        ));
+
+                        // Save reference to avoid GC
+                        Agent.timersReference.Add(timer);
+
+                    }
                 }
             }
         }
         #endregion
+
 
         // Load plugin assemblies
         public static List<PluginDefinition> LoadPlugins()
@@ -73,19 +89,43 @@ namespace winagent
             return pluginList;
         }
 
-        // Executes the windows service 
-        public static void ExecuteService()
+        
+        // Calculates the iteration time based in the config file
+        public static int CalculateTime(int hours, int minutes, int seconds)
+        {
+            return hours * 3600000 + minutes * 60000 + seconds * 1000;
+        }
+
+
+        // Executes a task
+        public static void ExecuteTask(object state)
+        {
+            try
+            {
+                ((TaskObject)state).Execute();
+            }
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+
+        public static void ExecuteConfig(string path = @"config.json")
         {
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            // Create reference List
+            timersReference = new List<Timer>();
 
             // Load plugins after parse options
             List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
             // Read config file
-            config = JObject.Parse(File.ReadAllText(@"config.json"));
+            config = JObject.Parse(File.ReadAllText(path));
 
-            foreach (JProperty input in ((JObject) config["input"]).Properties())
+            foreach (JProperty input in ((JObject)config["input"]).Properties())
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                 IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
@@ -96,25 +136,17 @@ namespace winagent
                     IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
 
                     TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
-                    
-                    Timer testimer = new Timer(ExecuteTask, task, 1000, CalculateTime());
-                    
-                    outputPlugin.Execute(inputPlugin.Execute(), output.Value["options"].ToObject<string[]>());
+
+                    Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
+                        output.Value["hours"].ToObject<int>(),
+                        output.Value["minutes"].ToObject<int>(),
+                        output.Value["seconds"].ToObject<int>()
+                    ));
+
+                    // Save reference to avoid GC
+                    Agent.timersReference.Add(timer);
                 }
             }
-        }
-
-        // Executes a task
-        public static int CalculateTime()
-        {
-            return 1000;
-        }
-
-
-        // Executes a task
-        public static void ExecuteTask(object state)
-        {
-            
         }
 
 
@@ -142,7 +174,6 @@ namespace winagent
                     outputPlugin.Execute(inputResult, options);
                 }
             }
-
         }
 
 

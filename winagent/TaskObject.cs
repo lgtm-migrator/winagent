@@ -8,16 +8,16 @@ namespace winagent
         private IOutputPlugin outputPlugin;
         private string[] options;
 
-        public TaskObject(IInputPlugin input, IOutputPlugin output, string[] args)
+        public TaskObject(IInputPlugin input, IOutputPlugin output, string[] opts)
         {
             inputPlugin = input;
             outputPlugin = output;
-            options = args;
+            options = opts;
         }
 
-        public void run()
+        public void Execute()
         {
-            outputPlugin.Execute(inputPlugin.Execute(), options);
+            outputPlugin.Execute("test", options);
         }
 
     }

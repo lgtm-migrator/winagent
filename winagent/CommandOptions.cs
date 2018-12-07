@@ -8,6 +8,9 @@ namespace winagent
     {
         // Options
 
+        [Value(0)]
+        public string ConfigFile { get; set; }
+
         [Option('i', "input", Separator = ',', Default = new string[] { "updates" }, HelpText = "Input plugins separated by comma.")]
         public IEnumerable<string> Input { get; set; }
 
