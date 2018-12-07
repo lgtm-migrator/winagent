@@ -1,6 +1,7 @@
 ﻿using System;
 using CommandLine;
 using System.ServiceProcess;
+using System.IO;
 
 namespace winagent
 {
@@ -30,15 +31,16 @@ namespace winagent
                 }
             }
 
-            //  Console.ReadKey();
         }
 
-        // Overloaded Main method with parsed options
+        // Command execution with parsed options
         static void Command(CommandOptions options)
         {
             if (options.ConfigFile != null)
             {
-                Agent.ExecuteService();
+                // Execute with config
+
+                Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
             else
@@ -47,7 +49,7 @@ namespace winagent
             }
         }
 
-        // Overloaded Main method with parsed options
+        // Service management with parsed options
         static void Service(ServiceOptions options)
         {
             if (options.Install)
