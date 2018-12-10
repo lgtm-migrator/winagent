@@ -45,7 +45,7 @@ namespace winagent
             }
             else
             {
-                Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "table" });
+                Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "json" });
             }
         }
 

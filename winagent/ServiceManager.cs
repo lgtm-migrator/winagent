@@ -130,7 +130,6 @@ namespace winagent
     {
         public WinagentInstallerProcess()
         {
-            //this.Account = ServiceAccount.NetworkService;
             this.Account = ServiceAccount.LocalSystem;
         }
     }
@@ -143,7 +142,7 @@ namespace winagent
             this.Description = "Windows Agent";
             this.DisplayName = "Winagent";
             this.ServiceName = "Winagent";
-            this.StartType = System.ServiceProcess.ServiceStartMode.Manual;
+            this.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
         }
     }
 
