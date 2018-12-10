@@ -17,7 +17,7 @@ namespace winagent
 
         public void Execute()
         {
-            outputPlugin.Execute("test", options);
+            outputPlugin.Execute(inputPlugin.Execute(), options);
         }
 
     }
