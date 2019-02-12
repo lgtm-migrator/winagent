@@ -5,8 +5,6 @@ using System.Linq;
 using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
-using System.Threading.Tasks;
-using CommandLine;
 using System.ServiceProcess;
 using System.Diagnostics;
 
@@ -46,6 +44,12 @@ namespace winagent
 
                 // Read config file
                 config = JObject.Parse(File.ReadAllText(@"config.json"));
+
+                // Create detached autoupdater if autoupdates are enabled and it doesn't exists
+                if (Boolean.Parse(config.GetValue("autoupdates").ToString()) && Process.GetProcessesByName("winagent-updater").Length < 1)
+                {
+                    Process.Start(@"winagent-updater.exe");
+                }
 
                 foreach (JProperty input in ((JObject)config["input"]).Properties())
                 {

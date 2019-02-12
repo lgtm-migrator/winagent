@@ -2,6 +2,7 @@
 using CommandLine;
 using System.ServiceProcess;
 using System.IO;
+using System.Diagnostics;
 
 namespace winagent
 {
