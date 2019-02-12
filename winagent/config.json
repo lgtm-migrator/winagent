@@ -1,4 +1,5 @@
 ﻿{
+  "autoupdates": true,
   "input": {
     "Updates": {
       /*
@@ -15,7 +16,7 @@
         "hours": 0
       }
 
-    }/*,
+    } /*,
     "HeartBeat": {
 
       "RabbitMQ": {
