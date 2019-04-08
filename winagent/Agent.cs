@@ -36,42 +36,60 @@ namespace winagent
 
             protected override void OnStart(string[] args)
             {
-                // Create reference List
-                timersReference = new List<Timer>();
-
-                // Load plugins after parse options
-                List<PluginDefinition> pluginList = Agent.LoadPlugins();
-
-                // Read config file
-                config = JObject.Parse(File.ReadAllText(@"config.json"));
-
-                // Create detached autoupdater if autoupdates are enabled and it doesn't exists
-                if (Boolean.Parse(config.GetValue("autoupdates").ToString()) && Process.GetProcessesByName("winagent-updater").Length < 1)
+                try
                 {
-                    Process.Start(@"winagent-updater.exe");
-                }
+                    // Create reference List
+                    timersReference = new List<Timer>();
 
-                foreach (JProperty input in ((JObject)config["input"]).Properties())
-                {
-                    PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-                    IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+                    // Load plugins after parse options
+                    List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
-                    foreach (JProperty output in ((JObject)input.Value).Properties())
+                    // Read config file
+                    config = JObject.Parse(File.ReadAllText(@"config.json"));
+
+                    foreach (JProperty input in ((JObject)config["input"]).Properties())
                     {
-                        PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                        IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+                        PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
+                        IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
 
-                        TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
+                        foreach (JProperty output in ((JObject)input.Value).Properties())
+                        {
+                            PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
+                            IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
 
-                        Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
-                            output.Value["hours"].ToObject<int>(),
-                            output.Value["minutes"].ToObject<int>(),
-                            output.Value["seconds"].ToObject<int>()
-                        ));
+                            // To pass multiple objects to the timer
+                            // It is necesary to create a custom object containing the others
+                            TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
 
-                        // Save reference to avoid GC
-                        Agent.timersReference.Add(timer);
+                            Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
+                                output.Value["hours"].ToObject<int>(),
+                                output.Value["minutes"].ToObject<int>(),
+                                output.Value["seconds"].ToObject<int>()
+                            ));
 
+                            // Save reference to avoid GC
+                            Agent.timersReference.Add(timer);
+                        }
+                    }
+
+                    // Run the updater after 1 minute
+                    // TODO: Put interval from config
+                    // The timer will run every 10 mins
+                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(0, 2, 0));
+                    // Save reference to avoid GC
+                    Agent.timersReference.Add(updaterTimer);
+                }
+                catch (Exception e)
+                {
+                    // EventID 1 => "tmp" Directory not found
+                    using (EventLog eventLog = new EventLog("Application"))
+                    {
+                        System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred in the winagent service:");
+                        message.Append(Environment.NewLine);
+                        message.Append(e.ToString());
+
+                        eventLog.Source = "Winagent";
+                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 1);
                     }
                 }
             }
@@ -100,6 +118,33 @@ namespace winagent
             return hours * 3600000 + minutes * 60000 + seconds * 1000;
         }
 
+        // Execute updater
+        public static void RunUpdater(object state)
+        {
+            try
+            {
+                // Create detached autoupdater if autoupdates are enabled and it doesn't exists
+                if (Boolean.Parse(config.GetValue("autoupdates").ToString()) && Process.GetProcessesByName("winagent-updater").Length < 1)
+                {
+                    Process.Start(@"winagent-updater.exe");
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+
+                // EventID 2 => Error executing updater
+                using (EventLog eventLog = new EventLog("Application"))
+                {
+                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing updater:");
+                    message.Append(Environment.NewLine);
+                    message.Append(e.ToString());
+
+                    eventLog.Source = "Winagent";
+                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 2);
+                }
+            }
+        }
 
         // Executes a task
         public static void ExecuteTask(object state)
@@ -111,10 +156,21 @@ namespace winagent
             catch(Exception e)
             {
                 Console.WriteLine(e);
+
+                // EventID 2 => Error executing plugin
+                using (EventLog eventLog = new EventLog("Application"))
+                {
+                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing a plugin:");
+                    message.Append(Environment.NewLine);
+                    message.Append(e.ToString());
+
+                    eventLog.Source = "Winagent";
+                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 2);
+                }
             }
         }
 
-
+        // Non-service execution
         public static void ExecuteConfig(string path = @"config.json")
         {
             // Set current directory as base directory
