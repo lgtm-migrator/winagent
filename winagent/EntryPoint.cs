@@ -1,8 +1,13 @@
 ﻿using System;
 using CommandLine;
 using System.ServiceProcess;
+using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Diagnostics;
+using RestSharp;
+using RestSharp.Extensions;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace winagent
 {
