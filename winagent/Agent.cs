@@ -72,12 +72,16 @@ namespace winagent
                         }
                     }
 
-                    // Run the updater after 1 minute
-                    // TODO: Put interval from config
-                    // The timer will run every 10 mins
-                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(0, 2, 0));
-                    // Save reference to avoid GC
-                    Agent.timersReference.Add(updaterTimer);
+                    // Create detached autoupdater if autoupdates are enabled and it doesn't exists
+                    if (Boolean.Parse(config.GetValue("autoupdates").ToString()))
+                    {
+                        // Run the updater after 1 minute
+                        // TODO: Put interval from config
+                        // The timer will run every 10 mins
+                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(0, 5, 0));
+                        // Save reference to avoid GC
+                        Agent.timersReference.Add(updaterTimer);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -123,11 +127,24 @@ namespace winagent
         {
             try
             {
-                // Create detached autoupdater if autoupdates are enabled and it doesn't exists
-                if (Boolean.Parse(config.GetValue("autoupdates").ToString()) && Process.GetProcessesByName("winagent-updater").Length < 1)
+                // If there is a new version of the updater in .\tmp\ copy it
+                if(File.Exists(@".\tmp\winagent-updater.exe"))
                 {
-                    Process.Start(@"winagent-updater.exe");
+                    File.Copy(@".\tmp\winagent-updater.exe", @".\winagent-updater.exe", true);
+                    File.Delete(@".\tmp\winagent-updater.exe");
+
+                    // EventID 3 => Application updated
+                    using (EventLog eventLog = new EventLog("Application"))
+                    {
+                        System.Text.StringBuilder message = new System.Text.StringBuilder("Application updated");
+                        message.Append(Environment.NewLine);
+                        message.Append(@"./winagent-updater.exe");
+                        eventLog.Source = "Winagent";
+                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Information, 3, 1);
+                    }
                 }
+
+                Process.Start(@"winagent-updater.exe");
             }
             catch (Exception e)
             {
@@ -264,6 +281,5 @@ namespace winagent
                 }
             }
         }
-
     }
 }
