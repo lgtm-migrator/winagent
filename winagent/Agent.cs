@@ -44,6 +44,8 @@ namespace winagent
                     // Load plugins after parse options
                     List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
+                    // TODO: Evaluate if using class decoration would be better
+                    // TODO: Change "input" for "plugins"
                     // Read config file
                     config = JObject.Parse(File.ReadAllText(@"config.json"));
 
@@ -72,15 +74,35 @@ namespace winagent
                         }
                     }
 
-                    // Create detached autoupdater if autoupdates are enabled and it doesn't exists
-                    if (Boolean.Parse(config.GetValue("autoupdates").ToString()))
+                    // Get the autoupdates object
+                    var autoupdates = config["autoupdates"];
+
+                    // Create detached autoupdater if autoupdates are enabled
+                    if (autoupdates["enabled"].ToObject<bool>())
                     {
                         // Run the updater after 1 minute
-                        // TODO: Put interval from config
+                        // TODO: Put start after 1 min
                         // The timer will run every 10 mins
-                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(0, 5, 0));
+                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 5000, CalculateTime(
+                            autoupdates["hours"].ToObject<int>(), 
+                            autoupdates["minutes"].ToObject<int>(),
+                            autoupdates["seconds"].ToObject<int>()
+                        ));
                         // Save reference to avoid GC
                         Agent.timersReference.Add(updaterTimer);
+                    }
+                }
+                catch (InvalidOperationException ioe)
+                {
+                    // EventID 4 => There are no plugins to execute
+                    using (EventLog eventLog = new EventLog("Application"))
+                    {
+                        System.Text.StringBuilder message = new System.Text.StringBuilder("There are no plugins to execute:");
+                        message.Append(Environment.NewLine);
+                        message.Append(ioe.ToString());
+
+                        eventLog.Source = "Winagent";
+                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 4, 1);
                     }
                 }
                 catch (Exception e)
@@ -143,7 +165,6 @@ namespace winagent
                         eventLog.WriteEntry(message.ToString(), EventLogEntryType.Information, 3, 1);
                     }
                 }
-
                 Process.Start(@"winagent-updater.exe");
             }
             catch (Exception e)
@@ -187,6 +208,7 @@ namespace winagent
             }
         }
 
+        //TODO: Add Error management
         // Non-service execution
         public static void ExecuteConfig(string path = @"config.json")
         {
