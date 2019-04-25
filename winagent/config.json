@@ -1,5 +1,11 @@
 ﻿{
-  "autoupdates": true,
+  "autoupdates": {
+    "enabled": true,
+    "source": null,
+    "seconds": 0,
+    "minutes": 10,
+    "hours": 0
+  },
   "input": {
     "Updates": {
       /*

@@ -34,6 +34,7 @@ namespace winagent
         // Command execution with parsed options
         static void Command(CommandOptions options)
         {
+            // TODO: Specify config file
             if (options.ConfigFile != null)
             {
                 // Execute with config
