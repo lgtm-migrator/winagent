@@ -85,7 +85,7 @@ namespace winagent
                 }
                 catch (Exception e)
                 {
-                    // EventID 1 => "tmp" Directory not found
+                    // EventID 1 => An error ocurred
                     using (EventLog eventLog = new EventLog("Application"))
                     {
                         System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred in the winagent service:");
@@ -93,7 +93,7 @@ namespace winagent
                         message.Append(e.ToString());
 
                         eventLog.Source = "Winagent";
-                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 1);
+                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 1, 1);
                     }
                 }
             }
@@ -158,7 +158,7 @@ namespace winagent
                     message.Append(e.ToString());
 
                     eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 2);
+                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 2, 1);
                 }
             }
         }
@@ -174,7 +174,7 @@ namespace winagent
             {
                 Console.WriteLine(e);
 
-                // EventID 2 => Error executing plugin
+                // EventID 5 => Error executing plugin
                 using (EventLog eventLog = new EventLog("Application"))
                 {
                     System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing a plugin:");
@@ -182,7 +182,7 @@ namespace winagent
                     message.Append(e.ToString());
 
                     eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 0, 2);
+                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 5, 1);
                 }
             }
         }
