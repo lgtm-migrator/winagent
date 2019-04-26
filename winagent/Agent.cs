@@ -77,8 +77,10 @@ namespace winagent
                     // Get the autoupdates object
                     var autoupdates = config["autoupdates"];
 
+
+                    // TODO: HEREEEEE
                     // Create detached autoupdater if autoupdates are enabled
-                    if (autoupdates["enabled"].ToObject<bool>())
+                    if (autoupdates.SelectToken("enabled").Value<bool>())
                     {
                         // Run the updater after 1 minute
                         // TODO: Put start after 1 min
