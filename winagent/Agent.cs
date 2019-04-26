@@ -45,11 +45,10 @@ namespace winagent
                     List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
                     // TODO: Evaluate if using class decoration would be better
-                    // TODO: Change "input" for "plugins"
                     // Read config file
                     config = JObject.Parse(File.ReadAllText(@"config.json"));
 
-                    foreach (JProperty input in ((JObject)config["input"]).Properties())
+                    foreach (JProperty input in ((JObject)config["plugins"]).Properties())
                     {
                         PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                         IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
@@ -77,15 +76,12 @@ namespace winagent
                     // Get the autoupdates object
                     var autoupdates = config["autoupdates"];
 
-
-                    // TODO: HEREEEEE
                     // Create detached autoupdater if autoupdates are enabled
                     if (autoupdates.SelectToken("enabled").Value<bool>())
                     {
                         // Run the updater after 1 minute
-                        // TODO: Put start after 1 min
                         // The timer will run every 10 mins
-                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 5000, CalculateTime(
+                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(
                             autoupdates["hours"].ToObject<int>(), 
                             autoupdates["minutes"].ToObject<int>(),
                             autoupdates["seconds"].ToObject<int>()
@@ -226,7 +222,7 @@ namespace winagent
             // Read config file
             config = JObject.Parse(File.ReadAllText(path));
 
-            foreach (JProperty input in ((JObject)config["input"]).Properties())
+            foreach (JProperty input in ((JObject)config["plugins"]).Properties())
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                 IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
