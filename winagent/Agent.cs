@@ -10,6 +10,8 @@ using System.Diagnostics;
 
 using plugin;
 
+// TODO: Create constants for all the config stuff
+
 namespace winagent
 {
     class Agent
@@ -88,6 +90,19 @@ namespace winagent
                         ));
                         // Save reference to avoid GC
                         Agent.timersReference.Add(updaterTimer);
+                    }
+                }
+                catch (NullReferenceException nre)
+                {
+                    // EventID 6 => Problem with config file
+                    using (EventLog eventLog = new EventLog("Application"))
+                    {
+                        System.Text.StringBuilder message = new System.Text.StringBuilder("There is a problem with the config file:");
+                        message.Append(Environment.NewLine);
+                        message.Append(nre.ToString());
+
+                        eventLog.Source = "Winagent";
+                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 6, 1);
                     }
                 }
                 catch (InvalidOperationException ioe)
