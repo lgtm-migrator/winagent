@@ -50,6 +50,7 @@
     <ErrorReport>prompt</ErrorReport>
     <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <Prefer32Bit>true</Prefer32Bit>
+    <DocumentationFile>bin\x64\Release\winagent.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="EntryPoint.cs" />

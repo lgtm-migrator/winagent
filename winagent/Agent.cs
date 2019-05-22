@@ -16,12 +16,17 @@ namespace winagent
 {
     class Agent
     {
+        /// <summary>
+        /// Content of the onfiguration file "config.json"
+        /// </summary>
+        /// <see cref="https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_Linq_JObject.htm"/>
         static JObject config;
 
-        /// <summary>List to keep a reference of each task
-        /// <para>Keeping a reference avoid the timers to be garbage collected</para>
-        /// <seealso cref="https://stackoverflow.com/questions/18136735/can-timers-get-automatically-garbage-collected"/>
+        /// <summary>
+        /// List of timers to keep a reference of each task
+        /// Avoid the timers to be garbage collected
         /// </summary>
+        /// <see cref="https://stackoverflow.com/questions/18136735/can-timers-get-automatically-garbage-collected"/>
         static List<Timer> timersReference;
 
         #region Nested class to support running as service
