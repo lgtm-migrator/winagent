@@ -1,7 +1,7 @@
 ﻿{
   "autoupdates": {
     "enabled": true,
-    "source": null,
+    "source": "gitlab",
     "seconds": 0,
     "minutes": 10,
     "hours": 0

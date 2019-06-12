@@ -6,16 +6,16 @@ compilation:
   stage: compile
   before_script:
     - nuget restore
-    - mkdir winagent/lib
-    - wget https://github.com/cern-winagent/plugin/releases/latest/download/plugin.dll -OutFile winagent/lib/plugin.dll
+    - mkdir $env:CI_PROJECT_NAME/lib
+    - wget https://github.com/cern-$env:CI_PROJECT_NAME/plugin/releases/latest/download/plugin.dll -OutFile $env:CI_PROJECT_NAME/lib/plugin.dll
   script:
-    - msbuild /p:VersionAssembly=$env:CI_COMMIT_TAG /p:Configuration=Release winagent.sln
+    - msbuild /p:VersionAssembly=$env:CI_COMMIT_TAG /p:Configuration=Release $env:CI_PROJECT_NAME.sln
   after_script:
-    - (Get-FileHash winagent/bin/Release/winagent.exe -Algorithm SHA1).Hash > winagent/bin/Release/winagent.exe.sha1
+    - (Get-FileHash $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe -Algorithm SHA1).Hash > $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe.sha1
   artifacts:
     paths:
-      - winagent/bin/Release/winagent.exe
-      - winagent/bin/Release/winagent.exe.sha1
+      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe
+      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe.sha1
     expire_in: 1 year
 
 # This needs to be changed by GitLab
@@ -26,6 +26,6 @@ release:
     - tags
   script: 
     # Create a release for the current tag
-    - C:\Scripts\CreateRelease.ps1
-    # Update "latest" release links with the new artifacts
-    - C:\Scripts\UpdateLatestRelease.ps1
+    - CreateRelease
+    # Update "latest" release name the newest version number
+    - UpdateLatestRelease
