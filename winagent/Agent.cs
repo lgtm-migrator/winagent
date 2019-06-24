@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using System.IO;
 using System.Threading;
 using System.ServiceProcess;
@@ -20,14 +19,22 @@ namespace winagent
         /// Content of the onfiguration file "config.json"
         /// </summary>
         /// <see cref="https://www.newtonsoft.com/json/help/html/T_Newtonsoft_Json_Linq_JObject.htm"/>
-        static JObject config;
+        private static Settings.Agent config;
 
         /// <summary>
         /// List of timers to keep a reference of each task
         /// Avoid the timers to be garbage collected
         /// </summary>
         /// <see cref="https://stackoverflow.com/questions/18136735/can-timers-get-automatically-garbage-collected"/>
-        static List<Timer> timersReference;
+        private static List<Timer> timersReference;
+
+        /// <summary>
+        /// Static constructor to initialize static data when any static member is referenced
+        /// </summary>
+        static Agent()
+        {
+            config = Newtonsoft.Json.JsonConvert.DeserializeObject<Settings.Agent>(File.ReadAllText(@"config.json"));
+        }
 
         #region Nested class to support running as service
         public class Service : ServiceBase
@@ -51,48 +58,34 @@ namespace winagent
                     // Load plugins after parse options
                     List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
-                    // TODO: Evaluate if using class decoration would be better
-                    // Read config file
-                    config = JObject.Parse(File.ReadAllText(@"config.json"));
-
-                    foreach (JProperty input in ((JObject)config["plugins"]).Properties())
+                    foreach (Settings.InputPlugin input in config.InputPlugins)
                     {
                         PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                         IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
 
-                        foreach (JProperty output in ((JObject)input.Value).Properties())
+                        foreach (Settings.OutputPlugin output in input.OutputPlugins)
                         {
                             PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
                             IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
 
                             // To pass multiple objects to the timer
-                            // It is necesary to create a custom object containing the others
-                            TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
+                            // It is necessary to create a custom object containing the others
+                            // TODO: Pass JObject as parameter
+                            TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
 
-                            Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
-                                output.Value["hours"].ToObject<int>(),
-                                output.Value["minutes"].ToObject<int>(),
-                                output.Value["seconds"].ToObject<int>()
-                            ));
+                            Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
 
                             // Save reference to avoid GC
                             Agent.timersReference.Add(timer);
                         }
                     }
 
-                    // Get the autoupdates object
-                    var autoupdates = config["autoupdates"];
-
                     // Create detached autoupdater if autoupdates are enabled
-                    if (autoupdates.SelectToken("enabled").Value<bool>())
+                    if (config.UpdateSettings.Enabled)
                     {
                         // Run the updater after 1 minute
                         // The timer will run every 10 mins
-                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, CalculateTime(
-                            autoupdates["hours"].ToObject<int>(), 
-                            autoupdates["minutes"].ToObject<int>(),
-                            autoupdates["seconds"].ToObject<int>()
-                        ));
+                        Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, config.UpdateSettings.Schedule.GetTime());
                         // Save reference to avoid GC
                         Agent.timersReference.Add(updaterTimer);
                     }
@@ -239,26 +232,20 @@ namespace winagent
             // Load plugins after parse options
             List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
-            // Read config file
-            config = JObject.Parse(File.ReadAllText(path));
-
-            foreach (JProperty input in ((JObject)config["plugins"]).Properties())
+            foreach (Settings.InputPlugin input in config.InputPlugins)
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
                 IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
 
-                foreach (JProperty output in ((JObject)input.Value).Properties())
+                foreach (Settings.OutputPlugin output in input.OutputPlugins)
                 {
                     PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
                     IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
 
-                    TaskObject task = new TaskObject(inputPlugin, outputPlugin, output.Value["options"].ToObject<string[]>());
+                    // TODO: Change parameters to JObject 
+                    TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
 
-                    Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, CalculateTime(
-                        output.Value["hours"].ToObject<int>(),
-                        output.Value["minutes"].ToObject<int>(),
-                        output.Value["seconds"].ToObject<int>()
-                    ));
+                    Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
 
                     // Save reference to avoid GC
                     Agent.timersReference.Add(timer);
@@ -269,7 +256,7 @@ namespace winagent
 
         // Selects the specified plugin and executes it   
         public static void ExecuteCommand(String[] inputs, String[] outputs, String[] options)
-        {
+        {/*
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
@@ -291,7 +278,7 @@ namespace winagent
                     outputPlugin.Execute(inputResult, options);
                 }
             }
-        }
+        */}
 
 
         // Selects the classes with the specified attribute

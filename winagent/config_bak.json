@@ -1,0 +1,37 @@
+﻿{
+  "autoupdates": {
+    "enabled": true,
+    "source": "gitlab",
+    "seconds": 0,
+    "minutes": 10,
+    "hours": 0
+  },
+  "plugins": {
+    "Updates": {
+      /*
+      "RabbitMQ": {
+        "options": [ "epuentes-rabbitmq", "test", "test" ],
+        "seconds": 0,
+        "minutes": 0,
+        "hours": 0
+      },*/
+      "Console": {
+        "options": [ "table" ],
+        "seconds": 0,
+        "minutes": 0,
+        "hours": 0
+      }
+
+    } /*,
+    "HeartBeat": {
+
+      "RabbitMQ": {
+        "options": [ "epuentes-rabbitmq", "test", "test" ],
+        "seconds": 0,
+        "minutes": 0,
+        "hours": 0
+      }
+
+    }*/
+  }
+}

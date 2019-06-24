@@ -1,4 +1,5 @@
-﻿using plugin;
+﻿using Newtonsoft.Json.Linq;
+using plugin;
 
 namespace winagent
 {
@@ -6,18 +7,20 @@ namespace winagent
     {
         private IInputPlugin inputPlugin;
         private IOutputPlugin outputPlugin;
-        private string[] options;
+        private JObject inputOptions;
+        private JObject outputOptions;
 
-        public TaskObject(IInputPlugin input, IOutputPlugin output, string[] opts)
+        public TaskObject(IInputPlugin input, IOutputPlugin output, JObject inputOptions, JObject outputOptions)
         {
             inputPlugin = input;
             outputPlugin = output;
-            options = opts;
+            this.inputOptions = inputOptions;
+            this.outputOptions = outputOptions;
         }
 
         public void Execute()
         {
-            outputPlugin.Execute(inputPlugin.Execute(), options);
+            outputPlugin.Execute(inputPlugin.Execute(inputOptions), outputOptions);
         }
 
     }

@@ -44,6 +44,7 @@ namespace winagent
             }
             else
             {
+                // TODO: get parameters from options
                 Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "json" });
             }
         }
