@@ -1,7 +1,7 @@
 ﻿using System;
 using CommandLine;
 
-namespace winagent
+namespace winagent.Options
 {
     [Verb("service", HelpText = "Execute the agent as a service.")]
     class ServiceOptions

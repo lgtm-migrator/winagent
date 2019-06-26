@@ -53,16 +53,20 @@
     <DocumentationFile>bin\x64\Release\winagent.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CLI.cs" />
     <Compile Include="EntryPoint.cs" />
-    <Compile Include="CommandOptions.cs" />
+    <Compile Include="Options\CommandOptions.cs" />
     <Compile Include="Agent.cs" />
+    <Compile Include="Service.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Settings\InputPlugin.cs" />
     <Compile Include="Settings\Agent.cs" />
     <Compile Include="Settings\OutputPlugin.cs" />
     <Compile Include="Settings\AutoUpdater.cs" />
     <Compile Include="Settings\Schedule.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="ServiceOptions.cs" />
+    <Compile Include="Options\ServiceOptions.cs" />
     <Compile Include="ServiceManager.cs" />
     <Compile Include="TaskObject.cs" />
   </ItemGroup>

@@ -1,6 +1,9 @@
 ﻿using System;
 using CommandLine;
 using System.ServiceProcess;
+
+using winagent.Options;
+
 namespace winagent
 {
     class EntryPoint
@@ -23,7 +26,7 @@ namespace winagent
             }
             else
             {
-                using (var service = new Agent.Service())
+                using (var service = new winagent.Service())
                 {
                     ServiceBase.Run(service);
                 }
@@ -38,14 +41,14 @@ namespace winagent
             if (options.ConfigFile != null)
             {
                 // Execute with config
-                Agent.ExecuteConfig();
+                CLI.ExecuteConfig(options.ConfigFile);
                 Console.WriteLine("Press any key to exit");
                 Console.ReadKey();
             }
             else
             {
                 // TODO: get parameters from options
-                Agent.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "json" });
+                CLI.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "json" });
             }
         }
 

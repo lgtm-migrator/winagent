@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using CommandLine;
 
-namespace winagent
+namespace winagent.Options
 {
     [Verb("run", HelpText = "Run a specific configuration command.")]
     class CommandOptions
