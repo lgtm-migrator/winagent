@@ -35,7 +35,10 @@ namespace winagent
             timersReference = new List<Timer>();
         }
 
-        // Parse settings
+        /// <summary>
+        /// Parse settings
+        /// </summary>
+        /// <exception cref="FileNotFoundException">Thrown when the config file could not be found</exception>
         internal static Settings.Agent GetSettings(string path = @"config.json")
         {
             try
@@ -43,17 +46,12 @@ namespace winagent
                 // Content of the onfiguration file "config.json"
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<Settings.Agent>(File.ReadAllText(path));
             }
-            catch (FileNotFoundException ex)
+            catch (FileNotFoundException fnfe)
             {
-                // EventID 9 => Config file not found
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("Error reading config file: ");
-                    message.Append(path);
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Information, 9, 1);
-                }
+                // Event 9 => Config file not found
+                ExceptionManager.HandleError(String.Format("The specified config file \"{0}\" could not be found", path), 9, fnfe.ToString());
 
+                // TODO: Return null?
                 return null;
             }
         }
@@ -99,47 +97,11 @@ namespace winagent
             }
         }
 
-        // Execute updater
-        internal static void RunUpdater(object state)
-        {
-            try
-            {
-                // If there is a new version of the updater in .\tmp\ copy it
-                if(File.Exists(@".\tmp\winagent-updater.exe"))
-                {
-                    File.Copy(@".\tmp\winagent-updater.exe", @".\winagent-updater.exe", true);
-                    File.Delete(@".\tmp\winagent-updater.exe");
-
-                    // EventID 3 => Application updated
-                    using (EventLog eventLog = new EventLog("Application"))
-                    {
-                        System.Text.StringBuilder message = new System.Text.StringBuilder("Application updated");
-                        message.Append(Environment.NewLine);
-                        message.Append(@"./winagent-updater.exe");
-                        eventLog.Source = "Winagent";
-                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Information, 3, 1);
-                    }
-                }
-                Process.Start(@"winagent-updater.exe");
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-
-                // EventID 2 => Error executing updater
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing updater:");
-                    message.Append(Environment.NewLine);
-                    message.Append(e.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 2, 1);
-                }
-            }
-        }
-
-        // Executes a task
+        /// <summary>
+        /// Executes a task
+        /// </summary>
+        /// <param name="state"></param>
+        /// <exception cref="Exception">General error during plugin execution</exception>
         internal static void ExecuteTask(object state)
         {
             try
@@ -148,18 +110,8 @@ namespace winagent
             }
             catch(Exception e)
             {
-                Console.WriteLine(e);
-
                 // EventID 5 => Error executing plugin
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing a plugin:");
-                    message.Append(Environment.NewLine);
-                    message.Append(e.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 5, 1);
-                }
+                ExceptionManager.HandleInformation(String.Format("An error ocurred executing a plugin"), 5, e.ToString());
             }
         }
     }

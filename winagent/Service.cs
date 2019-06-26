@@ -62,49 +62,26 @@ namespace winagent
                     Agent.timersReference.Add(updaterTimer);
                 }
             }
-            catch (NullReferenceException nre)
-            {
-                // EventID 6 => Problem with config file
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("There is a problem with the config file:");
-                    message.Append(Environment.NewLine);
-                    message.Append(nre.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 6, 1);
-                }
-            }
+            // TODO: Check/Create NEW exception if the config file is wrong
             catch (InvalidOperationException ioe)
             {
                 // EventID 4 => There are no plugins to execute
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("There are no plugins to execute:");
-                    message.Append(Environment.NewLine);
-                    message.Append(ioe.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 4, 1);
-                }
+                ExceptionManager.HandleError(String.Format("There are no plugins to execute"), 4, ioe.ToString());
             }
             catch (Exception e)
             {
                 // EventID 1 => An error ocurred
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred in the winagent service:");
-                    message.Append(Environment.NewLine);
-                    message.Append(e.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 1, 1);
-                }
+                ExceptionManager.HandleError(String.Format("General error during service execution"), 1, e.ToString());
             }
         }
 
-        // Execute updater
-        public static void RunUpdater(object state)
+        /// <summary>
+        /// Execute updater
+        /// </summary>
+        /// TODO: ↓
+        /// <param name="state">Object to run the timer</param>
+        /// <exception cref="Exception">General exception when the updater is executed</exception>
+        internal static void RunUpdater(object state)
         {
             try
             {
@@ -115,32 +92,16 @@ namespace winagent
                     File.Delete(@".\tmp\winagent-updater.exe");
 
                     // EventID 3 => Application updated
-                    using (EventLog eventLog = new EventLog("Application"))
-                    {
-                        System.Text.StringBuilder message = new System.Text.StringBuilder("Application updated");
-                        message.Append(Environment.NewLine);
-                        message.Append(@"./winagent-updater.exe");
-                        eventLog.Source = "Winagent";
-                        eventLog.WriteEntry(message.ToString(), EventLogEntryType.Information, 3, 1);
-                    }
+                    ExceptionManager.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3, null);
                 }
                 Process.Start(@"winagent-updater.exe");
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
-
                 // EventID 2 => Error executing updater
-                using (EventLog eventLog = new EventLog("Application"))
-                {
-                    System.Text.StringBuilder message = new System.Text.StringBuilder("An error ocurred executing updater:");
-                    message.Append(Environment.NewLine);
-                    message.Append(e.ToString());
-
-                    eventLog.Source = "Winagent";
-                    eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, 2, 1);
-                }
+                ExceptionManager.HandleError(String.Format("An error ocurred executing updater"), 2, e.ToString());
             }
         }
+
     }
 }

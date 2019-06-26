@@ -46,7 +46,7 @@ namespace winagent
 
         
         // Selects the specified plugin and executes it   
-        internal static void ExecuteCommand(String[] inputs, String[] outputs, String[] inputOptions, String[] outputOptions)
+        internal static void ExecuteCommand(String[] inputs, String[] outputs, String[] options)
         {/*
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
@@ -58,7 +58,7 @@ namespace winagent
             {
                 PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.ToLower()).First();
                 IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-                string inputResult = inputPlugin.Execute(inputOptions);
+                string inputResult = inputPlugin.Execute();
 
                 foreach (String output in outputs)
                 {
