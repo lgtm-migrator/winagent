@@ -5,7 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Newtonsoft.Json.Linq;
 using plugin;
 
 namespace winagent
@@ -46,30 +46,52 @@ namespace winagent
 
         
         // Selects the specified plugin and executes it   
-        internal static void ExecuteCommand(String[] inputs, String[] outputs, String[] options)
-        {/*
+        internal static void ExecuteCommand(string i, string o, string[] inputOptions, string[] outputOptions)
+        {
+            // TODO: This has to be improved, it's a big workaround to convert the optons to JObject
+            // Convert options to dictionary
+            IDictionary<string, string> inputOptionsDict = inputOptions.Select(part => part.Split(':')).ToDictionary(sp => sp[0], sp => sp[1]);
+            IDictionary<string, string> outputOptionsDict = outputOptions.Select(part => part.Split(':')).ToDictionary(sp => sp[0], sp => sp[1]);
+            
+            // Convert options to JObject
+            JObject inputOptionsJObj = JObject.FromObject(inputOptionsDict);
+            JObject outputOptionsJObj = JObject.FromObject(outputOptionsDict);
+
+
+            // Create Settings
+            Settings.InputPlugin input = new Settings.InputPlugin()
+            {
+                Name = i,
+                Settings = inputOptionsJObj,
+                OutputPlugins = new List<Settings.OutputPlugin>
+                {
+                    new Settings.OutputPlugin
+                    {
+                        Name = o,
+                        Settings = outputOptionsJObj
+                    }
+                }
+            };
+            
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
             // Load plugins after parse options
             List<PluginDefinition> pluginList = Agent.LoadPlugins();
 
-            foreach (String input in inputs)
+            PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
+            IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+            string inputResult = inputPlugin.Execute(input.Settings);
+
+            foreach (Settings.OutputPlugin output in input.OutputPlugins)
             {
-                PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.ToLower()).First();
-                IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-                string inputResult = inputPlugin.Execute();
+                PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
 
-                foreach (String output in outputs)
-                {
-                    PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.ToLower()).First();
-
-                    IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+                IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
             
-                    outputPlugin.Execute(inputResult, options);
-                }
+                outputPlugin.Execute(inputResult, output.Settings);
             }
-        */}
-        
+        }
+
     }
 }

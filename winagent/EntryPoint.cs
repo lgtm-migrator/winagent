@@ -26,7 +26,7 @@ namespace winagent
             }
             else
             {
-                using (var service = new winagent.Service())
+                using (var service = new Service())
                 {
                     ServiceBase.Run(service);
                 }
@@ -47,8 +47,7 @@ namespace winagent
             }
             else
             {
-                // TODO: get parameters from options
-                CLI.ExecuteCommand((String[])options.Input, (String[])options.Output, new String[] { "json" });
+                CLI.ExecuteCommand(options.Input, options.Output, (string[])options.InputOptions, (string[])options.OutputOptions);
             }
         }
 

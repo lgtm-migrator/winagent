@@ -11,10 +11,16 @@ namespace winagent.Options
         [Value(0)]
         public string ConfigFile { get; set; }
 
-        [Option('i', "input", Separator = ',', Default = new string[] { "updates" }, HelpText = "Input plugins separated by comma.")]
-        public IEnumerable<string> Input { get; set; }
+        [Option('i', "input", Default = "updates", HelpText = "Input plugin")]
+        public string Input { get; set; }
 
-        [Option('o', "output", Separator = ',', Default = new string[] { "console" }, HelpText = "Output plugins separated by comma.")]
-        public IEnumerable<string> Output { get; set; }
+        [Option('o', "output", Default = "console", HelpText = "Output plugin")]
+        public string Output { get; set; }
+
+        [Option("input-options", Separator = ',', HelpText = "Options for the input plugin in the form <opt>:<value>")]
+        public IEnumerable<string> InputOptions { get; set; }
+
+        [Option("output-options", Separator = ',', HelpText = "Options for the output plugin separated by coma, in the form <opt>.<value>")]
+        public IEnumerable<string> OutputOptions { get; set; }
     }
 }
