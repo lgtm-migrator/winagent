@@ -17,61 +17,32 @@ namespace winagent
         public Service()
         {
             ServiceName = "Winagent";
-
-            // Set current directory as base directory
-            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
         }
-
 
         protected override void OnStart(string[] args)
         {
             try
             {
                 // Get application settings
-                Settings.Agent config = Agent.GetSettings();
+                Settings.Agent settings = Agent.GetSettings();
 
-                foreach (Settings.InputPlugin input in config.InputPlugins)
-                {
-                    PluginDefinition inputPluginMetadata = Agent.pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-                    IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-
-                    foreach (Settings.OutputPlugin output in input.OutputPlugins)
-                    {
-                        PluginDefinition outputPluginMetadata = Agent.pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                        IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
-
-                        // To pass multiple objects to the timer
-                        // It is necessary to create a custom object containing the others
-                        // TODO: Pass JObject as parameter
-                        TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
-
-                        Timer timer = new Timer(new TimerCallback(Agent.ExecuteTask), task, 0, output.Schedule.GetTime());
-
-                        // Save reference to avoid GC
-                        Agent.timersReference.Add(timer);
-                    }
-                }
+                // Create tasks
+                Agent.CreateTasks(settings.InputPlugins);
 
                 // Create detached autoupdater if autoupdates are enabled
-                if (config.UpdateSettings.Enabled)
+                if (settings.UpdateSettings.Enabled)
                 {
                     // Run the updater after 1 minute
                     // The timer will run every 10 mins
-                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, config.UpdateSettings.Schedule.GetTime());
+                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, settings.UpdateSettings.Schedule.GetTime());
                     // Save reference to avoid GC
                     Agent.timersReference.Add(updaterTimer);
                 }
             }
-            // TODO: Check/Create NEW exception if the config file is wrong
-            catch (InvalidOperationException ioe)
-            {
-                // EventID 4 => There are no plugins to execute
-                ExceptionManager.HandleError(String.Format("There are no plugins to execute"), 4, ioe.ToString());
-            }
             catch (Exception e)
             {
                 // EventID 1 => An error ocurred
-                ExceptionManager.HandleError(String.Format("General error during service execution"), 1, e.ToString());
+                ExceptionHandler.HandleError(String.Format("General error during service execution"), 1, e);
             }
         }
 
@@ -92,14 +63,14 @@ namespace winagent
                     File.Delete(@".\tmp\winagent-updater.exe");
 
                     // EventID 3 => Application updated
-                    ExceptionManager.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3, null);
+                    ExceptionHandler.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3, null);
                 }
                 Process.Start(@"winagent-updater.exe");
             }
             catch (Exception e)
             {
                 // EventID 2 => Error executing updater
-                ExceptionManager.HandleError(String.Format("An error ocurred executing updater"), 2, e.ToString());
+                ExceptionHandler.HandleError(String.Format("An error ocurred executing updater"), 2, e);
             }
         }
 

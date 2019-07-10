@@ -1,13 +1,11 @@
 ﻿using System;
 using System.Reflection;
 using System.Collections.Generic;
-using System.Linq;
 using System.IO;
 using System.Threading;
-using System.ServiceProcess;
-using System.Diagnostics;
 
 using plugin;
+using System.Linq;
 
 // TODO: Create constants for all the config stuff
 
@@ -39,6 +37,8 @@ namespace winagent
         /// Parse settings
         /// </summary>
         /// <exception cref="FileNotFoundException">Thrown when the config file could not be found</exception>
+        /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the content of the config file is incorrect</exception>
+        /// <exception cref="Exception">Thrown when a different error occurs</exception>
         internal static Settings.Agent GetSettings(string path = @"config.json")
         {
             try
@@ -48,26 +48,101 @@ namespace winagent
             }
             catch (FileNotFoundException fnfe)
             {
-                // Event 9 => Config file not found
-                ExceptionManager.HandleError(String.Format("The specified config file \"{0}\" could not be found", path), 9, fnfe.ToString());
+                // EventID 6 => Config file not found
+                ExceptionHandler.HandleError(String.Format("The specified path \"{0}\" does not appear to be valid", path), 6, fnfe);
 
-                // TODO: Return null?
-                return null;
+                throw;
+            }
+            catch (Newtonsoft.Json.JsonSerializationException jse)
+            {
+                // EventID 7 => Error in config file
+                ExceptionHandler.HandleError("The agent could not parse the config file, please check the syntax", 7, jse);
+
+                throw;
+            }
+            catch (Exception e)
+            {
+                // EventID 8 => Error while parsing the config file
+                ExceptionHandler.HandleError("An undefined error occurred while parsing the config file", 8, e);
+
+                throw;
             }
         }
 
-        // Load plugin assemblies
+        /// <summary>
+        /// Load plugin assemblies in the "plugins" folder
+        /// </summary>
         internal static List<PluginDefinition> LoadPlugins()
         {
             List<PluginDefinition> pluginList = new List<PluginDefinition>();
 
-            foreach (String path in Directory.GetFiles("plugins"))
+            try
             {
-                Assembly plugin = Assembly.LoadFrom(path);
-                pluginList.AddRange(LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(plugin));
+                foreach (String path in Directory.GetFiles("plugins"))
+                {
+                    Assembly plugin = Assembly.LoadFrom(path);
+                    pluginList.AddRange(LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(plugin));
+                }
+            }
+            catch(DirectoryNotFoundException dnfe)
+            {
+                // EventID 9 => Invalid plugin files in "plugins" folder
+                ExceptionHandler.HandleError(String.Format("Could not find \"plugins\" directory"), 9, dnfe);
+
+                throw;
+            }
+            catch (BadImageFormatException bie)
+            {
+                // EventID 10 => Invalid plugin files in "plugins" folder
+                ExceptionHandler.HandleError(String.Format("Invalid plugin file found in the \"plugins\" directory"), 10, bie);
+
+                throw;
             }
 
             return pluginList;
+        }
+
+        /// <summary>
+        /// Schedule tasks defined in the config file
+        /// </summary>
+        /// <param name="inputPlugins">Plugins to be executed</param>
+        internal static void CreateTasks(List<Settings.InputPlugin> inputPlugins)
+        {
+
+            // Set current directory as base directory
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+
+            foreach (Settings.InputPlugin input in inputPlugins)
+            {
+                try
+                {
+                    PluginDefinition inputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
+                    IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+
+                    foreach (Settings.OutputPlugin output in input.OutputPlugins)
+                    {
+                        PluginDefinition outputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
+                        IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+
+                        // Create task whitht the input and output plugins to be run by the Timer
+                        TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
+
+                        // Create Timer to schedule the task
+                        Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
+
+                        // Save reference to avoid GC
+                        timersReference.Add(timer);
+                    }
+                }
+                catch (InvalidOperationException ioe)
+                {
+                    // EventID 4 => There are no plugins to execute
+                    ExceptionHandler.HandleError(String.Format("The specified plugin does not exist in the \"plugins\" directory"), 4, ioe);
+
+                    throw;
+                }
+                
+            }
         }
 
         // Selects classes with the specified attribute
@@ -111,7 +186,7 @@ namespace winagent
             catch(Exception e)
             {
                 // EventID 5 => Error executing plugin
-                ExceptionManager.HandleInformation(String.Format("An error ocurred executing a plugin"), 5, e.ToString());
+                ExceptionHandler.HandleError(String.Format("An error ocurred executing a plugin"), 5, e);
             }
         }
     }

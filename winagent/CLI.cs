@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+
 using plugin;
 
 namespace winagent
@@ -20,31 +21,12 @@ namespace winagent
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
             // Get application settings
-            Settings.Agent config = Agent.GetSettings(path);
+            Settings.Agent settings = Agent.GetSettings(path);
 
-            foreach (Settings.InputPlugin input in config.InputPlugins)
-            {
-                PluginDefinition inputPluginMetadata = Agent.pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-                IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-
-                foreach (Settings.OutputPlugin output in input.OutputPlugins)
-                {
-                    PluginDefinition outputPluginMetadata = Agent.pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                    IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
-
-                    // TODO: Change parameters to JObject 
-                    TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
-
-                    Timer timer = new Timer(new TimerCallback(Agent.ExecuteTask), task, 0, output.Schedule.GetTime());
-
-                    // Save reference to avoid GC
-                    Agent.timersReference.Add(timer);
-                }
-            }
+            // Create tasks
+            Agent.CreateTasks(settings.InputPlugins);
         }
-
-
-        
+                       
         // Selects the specified plugin and executes it   
         internal static void ExecuteCommand(string i, string o, string[] inputOptions, string[] outputOptions)
         {

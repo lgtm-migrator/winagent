@@ -7,16 +7,18 @@ using System.Threading.Tasks;
 
 namespace winagent
 {
-    static class ExceptionManager
+    static class ExceptionHandler
     {
-        internal static void HandleError(string errorMessage, int errorCode, string exception)
+        internal static void HandleError(string errorMessage, int errorCode, Exception exception)
         {
             if (Environment.UserInteractive)
             {
                 Console.Error.WriteLine(String.Format("Error: {0}", errorCode));
                 Console.Error.WriteLine(errorMessage);
 #if DEBUG
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("----------");
+                Console.WriteLine("DEBUG INFO");
+                Console.WriteLine(exception.ToString());
 #endif
             }
             else
@@ -33,14 +35,16 @@ namespace winagent
             }
         }
 
-        internal static void HandleInformation(string errorMessage, int warningCode, string exception)
+        internal static void HandleInformation(string errorMessage, int warningCode, Exception exception)
         {
             if (Environment.UserInteractive)
             {
                 Console.Error.WriteLine(String.Format("Warning: {0}", warningCode));
                 Console.Error.WriteLine(errorMessage);
 #if DEBUG
-                Console.WriteLine(e.ToString());
+                Console.WriteLine("----------");
+                Console.WriteLine("DEBUG INFO");
+                Console.WriteLine(exception.ToString());
 #endif
             }
             else

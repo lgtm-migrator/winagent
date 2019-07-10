@@ -35,7 +35,7 @@ namespace winagent
                         {
                             installer.Rollback(state);
                         }
-                        catch(Exception e)
+                        catch(Exception)
                         {
                             // Since AssemblyInstaller prints the error message, just exit
                             Console.Error.WriteLine();
@@ -65,7 +65,7 @@ namespace winagent
                     {
                         installer.Uninstall(state);
                     }
-                    catch (Exception e)
+                    catch (Exception)
                     {
                         // Since AssemblyInstaller prints the error message, just exit
                         Console.Error.WriteLine();
@@ -91,7 +91,7 @@ namespace winagent
                 ServiceController controller = new ServiceController("Winagent");
                 controller.Start();
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException)
             {
                 Console.WriteLine("Service already started or not installed");
                 Console.WriteLine("Exiting...");
@@ -111,7 +111,7 @@ namespace winagent
                 ServiceController controller = new ServiceController("Winagent");
                 controller.Stop();
             }
-            catch (InvalidOperationException ex)
+            catch (InvalidOperationException)
             {
                 Console.WriteLine("Service already stopped or not installed");
                 Console.WriteLine("Exiting...");

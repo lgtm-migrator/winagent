@@ -55,7 +55,8 @@
   <ItemGroup>
     <Compile Include="CLI.cs" />
     <Compile Include="EntryPoint.cs" />
-    <Compile Include="ExceptionManager.cs" />
+    <Compile Include="ExceptionHandler.cs" />
+    <Compile Include="Exceptions\WrongPathException.cs" />
     <Compile Include="Options\CommandOptions.cs" />
     <Compile Include="Agent.cs" />
     <Compile Include="Service.cs">
