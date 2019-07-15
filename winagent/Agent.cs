@@ -186,7 +186,8 @@ namespace winagent
             catch(Exception e)
             {
                 // EventID 5 => Error executing plugin
-                ExceptionHandler.HandleError(String.Format("An error ocurred executing a plugin"), 5, e);
+                ExceptionHandler.HandleError(String.Format("An error ocurred while executing a plugin"), 5, e);
+                throw;
             }
         }
     }

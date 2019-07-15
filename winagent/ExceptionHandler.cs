@@ -15,6 +15,8 @@ namespace winagent
             {
                 Console.Error.WriteLine(String.Format("Error: {0}", errorCode));
                 Console.Error.WriteLine(errorMessage);
+                Console.Error.WriteLine(exception.Message);
+
 #if DEBUG
                 Console.WriteLine("----------");
                 Console.WriteLine("DEBUG INFO");
@@ -28,6 +30,8 @@ namespace winagent
                     StringBuilder message = new StringBuilder(errorMessage);
                     message.Append(Environment.NewLine);
                     message.Append(exception);
+                    message.Append(Environment.NewLine);
+                    message.Append(exception.Message);
 
                     eventLog.Source = "Winagent";
                     eventLog.WriteEntry(message.ToString(), EventLogEntryType.Error, errorCode, 1);
@@ -41,6 +45,7 @@ namespace winagent
             {
                 Console.Error.WriteLine(String.Format("Warning: {0}", warningCode));
                 Console.Error.WriteLine(errorMessage);
+                Console.Error.WriteLine(exception.Message);
 #if DEBUG
                 Console.WriteLine("----------");
                 Console.WriteLine("DEBUG INFO");
@@ -54,6 +59,8 @@ namespace winagent
                     StringBuilder message = new StringBuilder(errorMessage);
                     message.Append(Environment.NewLine);
                     message.Append(exception);
+                    message.Append(Environment.NewLine);
+                    message.Append(exception.Message);
 
                     eventLog.Source = "Winagent";
                     eventLog.WriteEntry(message.ToString(), EventLogEntryType.Warning, warningCode, 1);
