@@ -62,6 +62,7 @@
     <Compile Include="Service.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Settings\EnventLog.cs" />
     <Compile Include="Settings\InputPlugin.cs" />
     <Compile Include="Settings\Agent.cs" />
     <Compile Include="Settings\OutputPlugin.cs" />

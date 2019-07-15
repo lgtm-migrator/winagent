@@ -12,7 +12,7 @@ namespace winagent.Settings
         [JsonProperty(PropertyName = "settings")]
         public JObject Settings { get; set; }
 
-        [JsonProperty(PropertyName = "output_plugins")]
+        [JsonProperty(PropertyName = "outputPlugins")]
         public List<OutputPlugin> OutputPlugins { get; set; }
     }
 }

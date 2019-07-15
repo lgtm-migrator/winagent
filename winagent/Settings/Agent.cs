@@ -5,11 +5,14 @@ namespace winagent.Settings
 {
     class Agent
     {
-        [JsonProperty(PropertyName = "auto_updates")]
+        [JsonProperty(PropertyName = "autoUpdates")]
         public AutoUpdater UpdateSettings { set; get; }
 
-        [JsonProperty(PropertyName = "input_plugins")]
+        [JsonProperty(PropertyName = "inputPlugins")]
         public List<InputPlugin> InputPlugins { set; get; }
+
+        [JsonProperty(PropertyName = "eventsLogs")]
+        public List<EventLog> EventLogs { set; get; }
 
         public override string ToString()
         {
