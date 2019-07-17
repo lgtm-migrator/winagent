@@ -3,9 +3,11 @@ using System.Reflection;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using System.Linq;
+using System.Diagnostics;
 
 using plugin;
-using System.Linq;
+using Newtonsoft.Json;
 
 // TODO: Create constants for all the config stuff
 
@@ -190,5 +192,48 @@ namespace winagent
                 throw;
             }
         }
+
+        internal static void SetEventReaders(List<Settings.EventLog> eventLogs)
+        {
+            foreach(Settings.EventLog eventLog in eventLogs)
+            {
+                EventLog EventLogInstance = new EventLog(eventLog.Name);
+                EventLogInstance.EntryWritten += new EntryWrittenEventHandler((sender, e) => OnEntryWritten(sender, e, eventLog));
+                EventLogInstance.EnableRaisingEvents = true;
+            }
+        }
+
+        private static void OnEntryWritten(object sender, EntryWrittenEventArgs e, Settings.EventLog settings)
+        {
+            try
+            {
+                var eventdetail = e.Entry;
+                var log = new Models.Log()
+                {
+                    Date = eventdetail.TimeGenerated.ToUniversalTime(),
+                    Description = eventdetail.Message,
+                    Id = eventdetail.InstanceId,
+                    Severity = eventdetail.EntryType.ToString(),
+                    Source = eventdetail.Source,
+                    HostName = eventdetail.MachineName,
+                    EventLogName = settings.Name
+                };
+
+                foreach (Settings.OutputPlugin output in settings.OutputPlugins)
+                {
+                    PluginDefinition outputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
+                    IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+
+                    outputPlugin.Execute(JsonConvert.SerializeObject(log), output.Settings);
+                }
+            }
+            catch (Exception ex)
+            {
+                // EventID 11 => An error occurred while hadling an event
+                ExceptionHandler.HandleError(String.Format("An error occurred while hadling an Event"), 11, ex);
+            }
+        }
+
+
     }
 }

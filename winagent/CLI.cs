@@ -23,6 +23,9 @@ namespace winagent
             // Get application settings
             Settings.Agent settings = Agent.GetSettings(path);
 
+            // Create envent handlers
+            Agent.SetEventReaders(settings.EventLogs);
+
             // Create tasks
             Agent.CreateTasks(settings.InputPlugins);
         }

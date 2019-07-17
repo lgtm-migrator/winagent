@@ -11,7 +11,7 @@ namespace winagent.Settings
         [JsonProperty(PropertyName = "inputPlugins")]
         public List<InputPlugin> InputPlugins { set; get; }
 
-        [JsonProperty(PropertyName = "eventsLogs")]
+        [JsonProperty(PropertyName = "eventLogs")]
         public List<EventLog> EventLogs { set; get; }
 
         public override string ToString()

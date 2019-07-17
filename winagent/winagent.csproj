@@ -57,6 +57,7 @@
     <Compile Include="EntryPoint.cs" />
     <Compile Include="ExceptionHandler.cs" />
     <Compile Include="Exceptions\WrongPathException.cs" />
+    <Compile Include="Models\Log.cs" />
     <Compile Include="Options\CommandOptions.cs" />
     <Compile Include="Agent.cs" />
     <Compile Include="Service.cs">
@@ -131,9 +132,7 @@
       <EmbedInteropTypes>True</EmbedInteropTypes>
     </COMReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Models\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="$(SolutionDir)\BuildCommon.targets" />
 </Project>
