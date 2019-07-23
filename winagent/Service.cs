@@ -36,11 +36,11 @@ namespace winagent
                 Agent.CreateTasks(settings.InputPlugins);
 
                 // Create detached autoupdater if autoupdates are enabled
-                if (settings.UpdateSettings.Enabled)
+                if (settings.AutoUpdates.Enabled)
                 {
                     // Run the updater after 1 minute
                     // The timer will run every 10 mins
-                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, settings.UpdateSettings.Schedule.GetTime());
+                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, settings.AutoUpdates.Schedule.GetTime());
                     // Save reference to avoid GC
                     Agent.timersReference.Add(updaterTimer);
                 }

@@ -8,7 +8,7 @@ namespace winagent.Exceptions
 {
     class WrongPathException : Exception
     {
-        public WrongPathException(string message) : base(message)
+        public WrongPathException(string message, Exception inner) : base(message, inner)
         {
 
         }

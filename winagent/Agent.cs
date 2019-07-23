@@ -45,7 +45,7 @@ namespace winagent
         {
             try
             {
-                // Content of the onfiguration file "config.json"
+                // Content of the configuration file "config.json"
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<Settings.Agent>(File.ReadAllText(path));
             }
             catch (FileNotFoundException fnfe)
