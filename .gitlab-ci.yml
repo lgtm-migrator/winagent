@@ -2,20 +2,23 @@ stages:
   - compile
   - release
 
+variables:
+  assembly_extension: "exe"
+
 compilation:
   stage: compile
   before_script:
     - nuget restore
     - mkdir $env:CI_PROJECT_NAME/lib
-    - wget https://github.com/cern-$env:CI_PROJECT_NAME/plugin/releases/latest/download/plugin.dll -OutFile $env:CI_PROJECT_NAME/lib/plugin.dll
+    - wget https://gitlab.cern.ch/$env:CI_PROJECT_NAMESPACE/plugin/-/jobs/artifacts/master/raw/plugin/bin/Release/plugin.dll?job=compilation -OutFile $env:CI_PROJECT_NAME/lib/plugin.dll
   script:
     - msbuild /p:VersionAssembly=$env:CI_COMMIT_TAG /p:Configuration=Release $env:CI_PROJECT_NAME.sln
   after_script:
-    - (Get-FileHash $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe -Algorithm SHA1).Hash > $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe.sha1
+    - (Get-FileHash $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.$env:ASSEMBLY_EXTENSION -Algorithm SHA1).Hash > $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.$env:ASSEMBLY_EXTENSION.sha1
   artifacts:
     paths:
-      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe
-      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.exe.sha1
+      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.$env:ASSEMBLY_EXTENSION
+      - $env:CI_PROJECT_NAME/bin/Release/$env:CI_PROJECT_NAME.$env:ASSEMBLY_EXTENSION.sha1
     expire_in: 1 year
 
 # This needs to be changed by GitLab
