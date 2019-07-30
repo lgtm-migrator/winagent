@@ -73,6 +73,11 @@ namespace winagent
                 }
                 Process.Start(@"winagent-updater.exe");
             }
+            catch (System.ComponentModel.Win32Exception w32e)
+            {
+                // EventID 12 => Could not find the updater executable
+                ExceptionHandler.HandleError(String.Format("Could not find the updater"), 12, w32e);
+            }
             catch (Exception e)
             {
                 // EventID 2 => Error executing updater
