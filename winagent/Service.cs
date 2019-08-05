@@ -9,8 +9,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using plugin;
+using Winagent.ExceptionHandling;
 
-namespace winagent
+namespace Winagent
 {
     class Service : ServiceBase
     {
@@ -81,7 +82,7 @@ namespace winagent
             catch (Exception e)
             {
                 // EventID 2 => Error executing updater
-                ExceptionHandler.HandleError(String.Format("An error ocurred while executing updater"), 2, e);
+                ExceptionHandler.HandleError(String.Format("An error ocurred while executing the updater"), 2, e);
             }
         }
 

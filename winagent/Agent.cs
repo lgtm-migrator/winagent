@@ -5,13 +5,15 @@ using System.IO;
 using System.Threading;
 using System.Linq;
 using System.Diagnostics;
+using Newtonsoft.Json;
 
 using plugin;
-using Newtonsoft.Json;
+using Winagent.Settings;
+using Winagent.ExceptionHandling;
 
 // TODO: Create constants for all the config stuff
 
-namespace winagent
+namespace Winagent
 {
     class Agent
     {
@@ -197,7 +199,7 @@ namespace winagent
         {
             foreach(Settings.EventLog eventLog in eventLogs)
             {
-                EventLog EventLogInstance = new EventLog(eventLog.Name);
+                System.Diagnostics.EventLog EventLogInstance = new System.Diagnostics.EventLog(eventLog.Name);
                 EventLogInstance.EntryWritten += new EntryWrittenEventHandler((sender, e) => OnEntryWritten(sender, e, eventLog));
                 EventLogInstance.EnableRaisingEvents = true;
             }

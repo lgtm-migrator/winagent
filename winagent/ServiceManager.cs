@@ -4,7 +4,7 @@ using System.Configuration.Install;
 using System.Collections;
 using System.ComponentModel;
 
-namespace winagent
+namespace Winagent
 {
     class ServiceManager
     {

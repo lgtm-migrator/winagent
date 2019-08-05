@@ -2,9 +2,9 @@
 using CommandLine;
 using System.ServiceProcess;
 
-using winagent.Options;
+using Winagent.Options;
 
-namespace winagent
+namespace Winagent
 {
     class EntryPoint
     {

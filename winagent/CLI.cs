@@ -8,8 +8,9 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
 using plugin;
+using Winagent.Settings;
 
-namespace winagent
+namespace Winagent
 {
     static class CLI
     {       

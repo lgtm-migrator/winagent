@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace winagent.Models
+namespace Winagent.Models
 {
     class Log
     {

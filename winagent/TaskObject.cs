@@ -1,7 +1,7 @@
 ﻿using Newtonsoft.Json.Linq;
 using plugin;
 
-namespace winagent
+namespace Winagent
 {
     public class TaskObject
     {
