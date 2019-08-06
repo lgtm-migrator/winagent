@@ -70,7 +70,7 @@ namespace Winagent
                     File.Delete(@".\tmp\winagent-updater.exe");
 
                     // EventID 3 => Application updated
-                    ExceptionHandler.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3, null);
+                    ExceptionHandler.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3);
                 }
                 Process.Start(@"winagent-updater.exe");
             }
