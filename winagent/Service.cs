@@ -77,12 +77,12 @@ namespace Winagent
             catch (System.ComponentModel.Win32Exception w32e)
             {
                 // EventID 12 => Could not find the updater executable
-                ExceptionHandler.HandleError(String.Format("Could not find the updater"), 12, w32e);
+                ExceptionHandler.HandleError("Could not find the updater", 12, w32e);
             }
             catch (Exception e)
             {
                 // EventID 2 => Error executing updater
-                ExceptionHandler.HandleError(String.Format("An error ocurred while executing the updater"), 2, e);
+                ExceptionHandler.HandleError("An error ocurred while executing the updater", 2, e);
             }
         }
 
