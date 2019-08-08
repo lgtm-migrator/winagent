@@ -70,6 +70,10 @@ namespace Winagent
             {
                 ServiceManager.Stop();
             }
+            else if (options.Status)
+            {
+                ServiceManager.Status();
+            }
         }
     }
 }

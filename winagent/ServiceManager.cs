@@ -118,7 +118,23 @@ namespace Winagent
             }
             catch (Exception ex)
             {
-                Console.Write(ex);
+                Console.WriteLine(ex);
+
+                Console.Error.WriteLine(ex.Message);
+            }
+        }
+
+        public static void Status()
+        {
+            try
+            {
+                ServiceController controller = new ServiceController("Winagent");
+
+                Console.WriteLine("{0} is {1}", controller.ServiceName,controller.Status);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
 
                 Console.Error.WriteLine(ex.Message);
             }

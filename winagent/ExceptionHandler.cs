@@ -74,7 +74,7 @@ namespace Winagent.ExceptionHandling
         {
             if (Environment.UserInteractive)
             {
-                Console.Error.WriteLine(String.Format("Warning: {0}", infoCode));
+                Console.Error.WriteLine(String.Format("Information: {0}", infoCode));
                 Console.Error.WriteLine(infoMessage);
                 Console.Error.WriteLine(exception.Message);
 #if DEBUG
@@ -91,7 +91,7 @@ namespace Winagent.ExceptionHandling
                 message.Append(Environment.NewLine);
                 message.Append(exception.Message);
 
-                CreateLog(message.ToString(), EventLogEntryType.Warning, infoCode);
+                CreateLog(message.ToString(), EventLogEntryType.Information, infoCode);
             }
         }
 
@@ -104,7 +104,7 @@ namespace Winagent.ExceptionHandling
         {
             if (Environment.UserInteractive)
             {
-                Console.Error.WriteLine(String.Format("Warning: {0}", infoCode));
+                Console.Error.WriteLine(String.Format("Information: {0}", infoCode));
                 Console.Error.WriteLine(infoMessage);
 #if DEBUG
                 Console.WriteLine("----------");
@@ -116,7 +116,7 @@ namespace Winagent.ExceptionHandling
             {
                 StringBuilder message = new StringBuilder(infoMessage);
 
-                CreateLog(message.ToString(), EventLogEntryType.Warning, infoCode);
+                CreateLog(message.ToString(), EventLogEntryType.Information, infoCode);
             }
         }
 
