@@ -20,6 +20,9 @@ namespace Winagent.Options
         [Option("stop", HelpText = "Stop the service if it's installed and started")]
         public Boolean Stop { get; set; }
 
+        [Option("restart", HelpText = "Restart the service if it's installed and running")]
+        public Boolean Restart { get; set; }
+
         [Option("status", HelpText = "Check service status")]
         public Boolean Status { get; set; }
     }

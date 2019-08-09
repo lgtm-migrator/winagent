@@ -91,7 +91,9 @@ namespace Winagent
             try
             {
                 ServiceController controller = new ServiceController("Winagent");
+
                 controller.Start();
+                controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
             }
             catch (InvalidOperationException)
             {
@@ -111,11 +113,38 @@ namespace Winagent
             try
             {
                 ServiceController controller = new ServiceController("Winagent");
+
                 controller.Stop();
+                controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
             }
             catch (InvalidOperationException)
             {
                 Console.WriteLine("Service already stopped or not installed");
+                Console.WriteLine("Exiting...");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+
+                Console.Error.WriteLine(ex.Message);
+            }
+        }
+
+        public static void Restart()
+        {
+            try
+            {
+                ServiceController controller = new ServiceController("Winagent");
+
+                controller.Stop();
+                controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
+
+                controller.Start();
+                controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
+            }
+            catch (InvalidOperationException)
+            {
+                Console.WriteLine("Service not running or not installed");
                 Console.WriteLine("Exiting...");
             }
             catch (Exception ex)
