@@ -2,22 +2,85 @@
 using System.Diagnostics;
 using System.Text;
 
-namespace Winagent.ExceptionHandling
+namespace Winagent.MessageHandling
 {
-    public static class ExceptionHandler
+    public static class MessageHandler
     {
         /// <summary>
         /// 
         /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        /// <param name="innerException"></param>
+        public static void HandleError(string message, int eventId, Exception innerException)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Error, innerException);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        public static void HandleError(string message, int eventId)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Error);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        /// <param name="innerException"></param>
+        public static void HandleWarning(string message, int eventId, Exception innerException)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Warning, innerException);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        public static void HandleWarning(string message, int eventId)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Warning);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        /// <param name="innerException"></param>
+        public static void HandleInformation(string message, int eventId, Exception innerException)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Information, innerException);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="eventId"></param>
+        public static void HandleInformation(string message, int eventId)
+        {
+            HandleMessage(message, eventId, EventLogEntryType.Information);
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
         /// <param name="exception"></param>
-        public static void HandleError(string errorMessage, int errorCode, Exception exception)
+        private static void HandleMessage(string message, int eventId, EventLogEntryType type, Exception exception)
         {
             if (Environment.UserInteractive)
             {
-                Console.Error.WriteLine(String.Format("Error: {0}", errorCode));
-                Console.Error.WriteLine(errorMessage);
+                Console.Error.WriteLine(String.Format("EventID: {0}", eventId));
+                Console.Error.WriteLine(message);
                 Console.Error.WriteLine(exception.Message);
 
 #if DEBUG
@@ -28,13 +91,17 @@ namespace Winagent.ExceptionHandling
             }
             else
             {
-                StringBuilder message = new StringBuilder(errorMessage);
-                message.Append(Environment.NewLine);
-                message.Append(exception);
-                message.Append(Environment.NewLine);
-                message.Append(exception.Message);
+                StringBuilder logMessage = new StringBuilder(message);
+                logMessage.Append(Environment.NewLine);
+                logMessage.Append(exception.Message);
+                logMessage.Append(Environment.NewLine);
+                logMessage.Append(Environment.NewLine);
+                logMessage.Append("----------");
+                logMessage.Append(Environment.NewLine);
+                logMessage.Append("DEBUG INFO");
+                logMessage.Append(exception);
 
-                CreateLog(message.ToString(), EventLogEntryType.Error, errorCode);
+                CreateLog(message.ToString(), type, eventId);
             }
         }
 
@@ -43,80 +110,19 @@ namespace Winagent.ExceptionHandling
         /// </summary>
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
-        public static void HandleError(string errorMessage, int errorCode)
+        private static void HandleMessage(string errorMessage, int eventId, EventLogEntryType type)
         {
             if (Environment.UserInteractive)
             {
-                Console.Error.WriteLine(String.Format("Error: {0}", errorCode));
+                Console.Error.WriteLine(String.Format("EventID: {0}", eventId));
                 Console.Error.WriteLine(errorMessage);
-
-#if DEBUG
-                Console.WriteLine("----------");
-                Console.WriteLine("DEBUG INFO");
-                Console.WriteLine(exception.ToString());
-#endif
             }
             else
             {
                 StringBuilder message = new StringBuilder(errorMessage);
-
-                CreateLog(message.ToString(), EventLogEntryType.Error, errorCode);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="infoMessage"></param>
-        /// <param name="infoCode"></param>
-        /// <param name="exception"></param>
-        public static void HandleInformation(string infoMessage, int infoCode, Exception exception)
-        {
-            if (Environment.UserInteractive)
-            {
-                Console.Error.WriteLine(String.Format("Information: {0}", infoCode));
-                Console.Error.WriteLine(infoMessage);
-                Console.Error.WriteLine(exception.Message);
-#if DEBUG
-                Console.WriteLine("----------");
-                Console.WriteLine("DEBUG INFO");
-                Console.WriteLine(exception.ToString());
-#endif
-            }
-            else
-            {
-                StringBuilder message = new StringBuilder(infoMessage);
                 message.Append(Environment.NewLine);
-                message.Append(exception);
-                message.Append(Environment.NewLine);
-                message.Append(exception.Message);
 
-                CreateLog(message.ToString(), EventLogEntryType.Information, infoCode);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="infoMessage"></param>
-        /// <param name="infoCode"></param>
-        public static void HandleInformation(string infoMessage, int infoCode)
-        {
-            if (Environment.UserInteractive)
-            {
-                Console.Error.WriteLine(String.Format("Information: {0}", infoCode));
-                Console.Error.WriteLine(infoMessage);
-#if DEBUG
-                Console.WriteLine("----------");
-                Console.WriteLine("DEBUG INFO");
-                Console.WriteLine(exception.ToString());
-#endif
-            }
-            else
-            {
-                StringBuilder message = new StringBuilder(infoMessage);
-
-                CreateLog(message.ToString(), EventLogEntryType.Information, infoCode);
+                CreateLog(message.ToString(), type, eventId);
             }
         }
 

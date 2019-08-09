@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using plugin;
-using Winagent.ExceptionHandling;
+using Winagent.MessageHandling;
 
 namespace Winagent
 {
@@ -49,7 +49,7 @@ namespace Winagent
             catch (Exception e)
             {
                 // EventID 1 => An error ocurred
-                ExceptionHandler.HandleError(String.Format("General error during service execution"), 1, e);
+                MessageHandler.HandleError(String.Format("General error during service execution"), 1, e);
             }
         }
 
@@ -70,19 +70,19 @@ namespace Winagent
                     File.Delete(@".\tmp\winagent-updater.exe");
 
                     // EventID 3 => Application updated
-                    ExceptionHandler.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3);
+                    MessageHandler.HandleInformation(String.Format("Application updated: \"{0}\"", "winagent-updater.exe"), 3);
                 }
                 Process.Start(@"winagent-updater.exe");
             }
             catch (System.ComponentModel.Win32Exception w32e)
             {
                 // EventID 12 => Could not find the updater executable
-                ExceptionHandler.HandleError("Could not find the updater", 12, w32e);
+                MessageHandler.HandleError("Could not find the updater", 12, w32e);
             }
             catch (Exception e)
             {
                 // EventID 2 => Error executing updater
-                ExceptionHandler.HandleError("An error ocurred while executing the updater", 2, e);
+                MessageHandler.HandleError("An error ocurred while executing the updater", 2, e);
             }
         }
 

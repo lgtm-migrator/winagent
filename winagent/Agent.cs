@@ -9,7 +9,7 @@ using Newtonsoft.Json;
 
 using plugin;
 using Winagent.Settings;
-using Winagent.ExceptionHandling;
+using Winagent.MessageHandling;
 
 // TODO: Create constants for all the config stuff
 
@@ -53,21 +53,21 @@ namespace Winagent
             catch (FileNotFoundException fnfe)
             {
                 // EventID 6 => Config file not found
-                ExceptionHandler.HandleError(String.Format("The specified path \"{0}\" does not appear to be valid", path), 6, fnfe);
+                MessageHandler.HandleError(String.Format("The specified path \"{0}\" does not appear to be valid", path), 6, fnfe);
 
                 throw;
             }
             catch (Newtonsoft.Json.JsonSerializationException jse)
             {
                 // EventID 7 => Error in config file
-                ExceptionHandler.HandleError("The agent could not parse the config file, please check the syntax", 7, jse);
+                MessageHandler.HandleError("The agent could not parse the config file, please check the syntax", 7, jse);
 
                 throw;
             }
             catch (Exception e)
             {
                 // EventID 8 => Error while parsing the config file
-                ExceptionHandler.HandleError("An undefined error occurred while parsing the config file", 8, e);
+                MessageHandler.HandleError("An undefined error occurred while parsing the config file", 8, e);
 
                 throw;
             }
@@ -91,14 +91,14 @@ namespace Winagent
             catch(DirectoryNotFoundException dnfe)
             {
                 // EventID 9 => Invalid plugin files in "plugins" folder
-                ExceptionHandler.HandleError(String.Format("Could not find \"plugins\" directory"), 9, dnfe);
+                MessageHandler.HandleError(String.Format("Could not find \"plugins\" directory"), 9, dnfe);
 
                 throw;
             }
             catch (BadImageFormatException bie)
             {
                 // EventID 10 => Invalid plugin files in "plugins" folder
-                ExceptionHandler.HandleError(String.Format("Invalid plugin file found in the \"plugins\" directory"), 10, bie);
+                MessageHandler.HandleError(String.Format("Invalid plugin file found in the \"plugins\" directory"), 10, bie);
 
                 throw;
             }
@@ -141,7 +141,7 @@ namespace Winagent
                 catch (InvalidOperationException ioe)
                 {
                     // EventID 4 => There are no plugins to execute
-                    ExceptionHandler.HandleError(String.Format("The specified plugin does not exist in the \"plugins\" directory"), 4, ioe);
+                    MessageHandler.HandleError(String.Format("The specified plugin does not exist in the \"plugins\" directory"), 4, ioe);
 
                     throw;
                 }
@@ -190,6 +190,9 @@ namespace Winagent
                 Monitor.TryEnter(((TaskObject)state)._locker, ref hasLock);
                 if (!hasLock)
                 {
+                    // TODO: throw exception instead of return?
+                    // EventID 13 => Plugin execution overlapping
+                    MessageHandler.HandleWarning(String.Format("The execution of a plugin was skipped because it is still running in a different thread"), 13);
                     return;
                 }
 
@@ -199,7 +202,7 @@ namespace Winagent
             catch (Exception e)
             {
                 // EventID 5 => Error executing plugin
-                ExceptionHandler.HandleError(String.Format("An error ocurred while executing a plugin"), 5, e);
+                MessageHandler.HandleError(String.Format("An error ocurred while executing a plugin"), 5, e);
                 throw;
             }
             finally
@@ -248,7 +251,7 @@ namespace Winagent
             catch (Exception ex)
             {
                 // EventID 11 => An error occurred while hadling an event
-                ExceptionHandler.HandleError(String.Format("An error occurred while hadling an Event"), 11, ex);
+                MessageHandler.HandleError(String.Format("An error occurred while hadling an Event"), 11, ex);
             }
         }
 
