@@ -183,15 +183,31 @@ namespace Winagent
         /// <exception cref="Exception">General error during plugin execution</exception>
         internal static void ExecuteTask(object state)
         {
+            var hasLock = false;
+
             try
             {
+                Monitor.TryEnter(((TaskObject)state)._locker, ref hasLock);
+                if (!hasLock)
+                {
+                    return;
+                }
+
                 ((TaskObject)state).Execute();
+
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 // EventID 5 => Error executing plugin
                 ExceptionHandler.HandleError(String.Format("An error ocurred while executing a plugin"), 5, e);
                 throw;
+            }
+            finally
+            {
+                if (hasLock)
+                {
+                    Monitor.Exit(((TaskObject)state)._locker);
+                }
             }
         }
 

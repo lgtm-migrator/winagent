@@ -11,8 +11,10 @@ namespace Winagent
         // Get Installer instance
         public static AssemblyInstaller GetInstaller()
         {
-            AssemblyInstaller installer = new AssemblyInstaller(typeof(Service).Assembly, null);
-            installer.UseNewContext = true;
+            AssemblyInstaller installer = new AssemblyInstaller(typeof(Service).Assembly, null)
+            {
+                UseNewContext = true
+            };
             return installer;
         }
 

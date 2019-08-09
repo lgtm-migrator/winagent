@@ -9,6 +9,7 @@ namespace Winagent
         private IOutputPlugin outputPlugin;
         private JObject inputOptions;
         private JObject outputOptions;
+        public object _locker = new object();
 
         public TaskObject(IInputPlugin input, IOutputPlugin output, JObject inputOptions, JObject outputOptions)
         {
