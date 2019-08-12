@@ -58,7 +58,10 @@
     <Compile Include="EntryPoint.cs" />
     <Compile Include="ExceptionHandler.cs" />
     <Compile Include="Exceptions\WrongPathException.cs" />
+    <Compile Include="Models\OutputPlugin.cs" />
+    <Compile Include="Models\InputPlugin.cs" />
     <Compile Include="Models\Log.cs" />
+    <Compile Include="Models\Task.cs" />
     <Compile Include="Options\CommandOptions.cs" />
     <Compile Include="Agent.cs" />
     <Compile Include="Service.cs">
@@ -73,7 +76,6 @@
     <Compile Include="Settings\InputPlugin.cs" />
     <Compile Include="Settings\OutputPlugin.cs" />
     <Compile Include="Settings\Schedule.cs" />
-    <Compile Include="TaskObject.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config">

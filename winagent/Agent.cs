@@ -10,6 +10,7 @@ using Newtonsoft.Json;
 using plugin;
 using Winagent.Settings;
 using Winagent.MessageHandling;
+using winagent.Models;
 
 // TODO: Create constants for all the config stuff
 
@@ -121,15 +122,25 @@ namespace Winagent
                 try
                 {
                     PluginDefinition inputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-                    IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+                    IInputPlugin iPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
+
+                    var inputPlugin = new winagent.Models.InputPlugin(input.Name, iPlugin)
+                    {
+                        Settings = input.Settings
+                    };
 
                     foreach (Settings.OutputPlugin output in input.OutputPlugins)
                     {
                         PluginDefinition outputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                        IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+                        IOutputPlugin oPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+
+                        var outputPlugin = new winagent.Models.OutputPlugin(output.Name, oPlugin)
+                        {
+                            Settings = output.Settings
+                        };
 
                         // Create task whitht the input and output plugins to be run by the Timer
-                        TaskObject task = new TaskObject(inputPlugin, outputPlugin, input.Settings, output.Settings);
+                        Task task = new Task(inputPlugin, outputPlugin);
 
                         // Create Timer to schedule the task
                         Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
@@ -187,16 +198,16 @@ namespace Winagent
 
             try
             {
-                Monitor.TryEnter(((TaskObject)state)._locker, ref hasLock);
+                Monitor.TryEnter(((Task)state).Locker, ref hasLock);
                 if (!hasLock)
                 {
                     // TODO: throw exception instead of return?
                     // EventID 13 => Plugin execution overlapping
-                    MessageHandler.HandleWarning(String.Format("The execution of a plugin was skipped because it is still running in a different thread"), 13);
+                    MessageHandler.HandleWarning(String.Format("The execution of [{0} → {1}] was skipped because it is still running in a different thread", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 13);
                     return;
                 }
 
-                ((TaskObject)state).Execute();
+                ((Task)state).Execute();
 
             }
             catch (Exception e)
@@ -209,7 +220,7 @@ namespace Winagent
             {
                 if (hasLock)
                 {
-                    Monitor.Exit(((TaskObject)state)._locker);
+                    Monitor.Exit(((Task)state).Locker);
                 }
             }
         }
