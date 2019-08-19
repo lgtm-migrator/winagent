@@ -262,7 +262,7 @@ namespace Winagent
             catch (Exception ex)
             {
                 // EventID 11 => An error occurred while hadling an event
-                MessageHandler.HandleError(String.Format("An error occurred while hadling an Event"), 11, ex);
+                MessageHandler.HandleError("An error occurred while hadling an Event", 11, ex);
             }
         }
 

@@ -56,7 +56,7 @@
   <ItemGroup>
     <Compile Include="CLI.cs" />
     <Compile Include="EntryPoint.cs" />
-    <Compile Include="ExceptionHandler.cs" />
+    <Compile Include="MessageHandler.cs" />
     <Compile Include="Exceptions\WrongPathException.cs" />
     <Compile Include="Models\OutputPlugin.cs" />
     <Compile Include="Models\InputPlugin.cs" />
