@@ -8,8 +8,6 @@ namespace Winagent
 {
     class EntryPoint
     {
-        //static JObject config;
-
         // Entrypoint
         static void Main(string[] args)
         {
