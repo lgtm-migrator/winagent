@@ -130,10 +130,9 @@ namespace Winagent
                 // Load the class that is implementing a custom attribute in the assembly
                 // "I<plugin>" / "O<plugin>"
                 // TODO: Null pointer exception if there is no attribute
-                Type typeImplementingAttribute = assembly.GetTypes().FirstOrDefault();
-
-                // Get the attribute implemented
-                Attribute attribute = typeImplementingAttribute.GetCustomAttribute(typeof(PluginAttribute));
+                Type typeImplementingAttribute = (from type in assembly.GetTypes()
+                                                 where type.IsDefined(typeof(PluginAttribute), false)
+                                                 select type).FirstOrDefault();
 
                 // Return 
                 return Activator.CreateInstance(typeImplementingAttribute);
