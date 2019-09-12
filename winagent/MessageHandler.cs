@@ -96,12 +96,13 @@ namespace Winagent.MessageHandling
                 logMessage.Append(innerException.Message);
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append(Environment.NewLine);
-                logMessage.Append("----------");
+                logMessage.Append("----------------------");
                 logMessage.Append(Environment.NewLine);
-                logMessage.Append("DEBUG INFO");
+                logMessage.Append("DEBUG INFO:");
+                logMessage.Append(Environment.NewLine);
                 logMessage.Append(innerException);
 
-                CreateLog(message.ToString(), type, eventId);
+                CreateLog(logMessage.ToString(), type, eventId);
             }
         }
 
