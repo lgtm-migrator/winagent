@@ -10,7 +10,7 @@ using Newtonsoft.Json;
 using plugin;
 using Winagent.Settings;
 using Winagent.MessageHandling;
-using winagent.Models;
+using Winagent.Models;
 
 // TODO: Create constants for all the config stuff
 
@@ -25,16 +25,10 @@ namespace Winagent
         internal static List<Timer> timersReference;
 
         /// <summary>
-        /// List of plugins in the "plugins" folder
-        /// </summary>
-        internal static List<PluginDefinition> pluginList;
-
-        /// <summary>
         /// Static constructor to initialize static data when any static member is referenced
         /// </summary>
         static Agent()
         {
-            pluginList = LoadPlugins();
             timersReference = new List<Timer>();
         }
 
@@ -75,39 +69,6 @@ namespace Winagent
         }
 
         /// <summary>
-        /// Load plugin assemblies in the "plugins" folder
-        /// </summary>
-        internal static List<PluginDefinition> LoadPlugins()
-        {
-            List<PluginDefinition> pluginList = new List<PluginDefinition>();
-
-            try
-            {
-                foreach (String path in Directory.GetFiles("plugins"))
-                {
-                    Assembly plugin = Assembly.LoadFrom(path);
-                    pluginList.AddRange(LoadAllClassesImplementingSpecificAttribute<PluginAttribute>(plugin));
-                }
-            }
-            catch(DirectoryNotFoundException dnfe)
-            {
-                // EventID 9 => Invalid plugin files in "plugins" folder
-                MessageHandler.HandleError(String.Format("Could not find \"plugins\" directory"), 9, dnfe);
-
-                throw;
-            }
-            catch (BadImageFormatException bie)
-            {
-                // EventID 10 => Invalid plugin files in "plugins" folder
-                MessageHandler.HandleError(String.Format("Invalid plugin file found in the \"plugins\" directory"), 10, bie);
-
-                throw;
-            }
-
-            return pluginList;
-        }
-
-        /// <summary>
         /// Schedule tasks defined in the config file
         /// </summary>
         /// <param name="inputPlugins">Plugins to be executed</param>
@@ -121,25 +82,23 @@ namespace Winagent
             {
                 try
                 {
-                    PluginDefinition inputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-                    IInputPlugin iPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-
-                    var inputPlugin = new winagent.Models.InputPlugin(input.Name, iPlugin)
+                    var inputPlugin = new Winagent.Models.InputPlugin()
                     {
-                        Settings = input.Settings
+                        Name = input.Name,
+                        Settings = input.Settings,
+                        Instance = (IInputPlugin)GetPluginInstance(input.Name)
                     };
 
                     foreach (Settings.OutputPlugin output in input.OutputPlugins)
                     {
-                        PluginDefinition outputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                        IOutputPlugin oPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
-
-                        var outputPlugin = new winagent.Models.OutputPlugin(output.Name, oPlugin)
+                        var outputPlugin = new Winagent.Models.OutputPlugin()
                         {
-                            Settings = output.Settings
+                            Name = output.Name,
+                            Settings = output.Settings,
+                            Instance = (IOutputPlugin)GetPluginInstance(output.Name)
                         };
 
-                        // Create task whitht the input and output plugins to be run by the Timer
+                        // Create task with the input and output plugins to be run by the Timer
                         Task task = new Task(inputPlugin, outputPlugin);
 
                         // Create Timer to schedule the task
@@ -160,33 +119,36 @@ namespace Winagent
             }
         }
 
-        // Selects classes with the specified attribute
-        private static List<PluginDefinition> LoadAllClassesImplementingSpecificAttribute<T>(Assembly assembly)
+        // Get instace of the plugin
+        internal static object GetPluginInstance(string name)
         {
-            IEnumerable<Type> typesImplementingAttribute = GetTypesWithSpecificAttribute<T>(assembly);
-
-            List<PluginDefinition> attributeList = new List<PluginDefinition>();
-            foreach (Type type in typesImplementingAttribute)
+            try
             {
-                var attribute = type.GetCustomAttribute(typeof(T));
-                attributeList.Add(new PluginDefinition(attribute, type));
+                // Load plugin assembly
+                Assembly assembly = Assembly.LoadFrom(String.Format("plugins/{0}.dll", name));
+
+                // Load the class that is implementing a custom attribute in the assembly
+                // "I<plugin>" / "O<plugin>"
+                // TODO: Null pointer exception if there is no attribute
+                Type typeImplementingAttribute = assembly.GetTypes().FirstOrDefault();
+
+                // Get the attribute implemented
+                Attribute attribute = typeImplementingAttribute.GetCustomAttribute(typeof(PluginAttribute));
+
+                // Return 
+                return Activator.CreateInstance(typeImplementingAttribute);
             }
-
-            return attributeList;
-        }
-
-        // Selects the types of the classes with the specified attribute
-        internal static IEnumerable<Type> GetTypesWithSpecificAttribute<T>(Assembly assembly)
-        {
-            foreach (Type type in assembly.GetTypes())
+            catch (BadImageFormatException bie)
             {
-                if (type.GetCustomAttributes(typeof(T), true).Length > 0)
-                {
-                    yield return type;
-                }
+                // TODO: Check when is this exception thrown
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw;
             }
         }
-
+        
         /// <summary>
         /// Executes a task
         /// </summary>
@@ -201,7 +163,6 @@ namespace Winagent
                 Monitor.TryEnter(((Task)state).Locker, ref hasLock);
                 if (!hasLock)
                 {
-                    // TODO: throw exception instead of return?
                     // EventID 13 => Plugin execution overlapping
                     MessageHandler.HandleWarning(String.Format("The execution of [{0} → {1}] was skipped because it is still running in a different thread", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 13);
                     return;
@@ -213,7 +174,7 @@ namespace Winagent
             catch (Exception e)
             {
                 // EventID 5 => Error executing plugin
-                MessageHandler.HandleError(String.Format("An error ocurred while executing a plugin"), 5, e);
+                MessageHandler.HandleError(String.Format("An error ocurred while executing a plugin: [{0} → {1}]", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 5, e);
                 throw;
             }
             finally
@@ -253,10 +214,11 @@ namespace Winagent
 
                 foreach (Settings.OutputPlugin output in settings.OutputPlugins)
                 {
-                    PluginDefinition outputPluginMetadata = pluginList.Where(p => ((PluginAttribute)p.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
-                    IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
+                    // TODO: Do not load de assembly in each execution
+                    var outputInstance = (IOutputPlugin)GetPluginInstance(output.Name);
 
-                    outputPlugin.Execute(JsonConvert.SerializeObject(log), output.Settings);
+                    // TODO: Specific exception for the output plugin
+                    outputInstance.Execute(JsonConvert.SerializeObject(log), output.Settings);
                 }
             }
             catch (Exception ex)

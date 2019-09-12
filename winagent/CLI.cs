@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,6 +10,7 @@ using Newtonsoft.Json.Linq;
 
 using plugin;
 using Winagent.Settings;
+using Winagent.Models;
 
 namespace Winagent
 {
@@ -39,45 +41,29 @@ namespace Winagent
             IDictionary<string, string> inputOptionsDict = inputOptions.Select(part => part.Split(':')).ToDictionary(sp => sp[0], sp => sp[1]);
             IDictionary<string, string> outputOptionsDict = outputOptions.Select(part => part.Split(':')).ToDictionary(sp => sp[0], sp => sp[1]);
             
-            // Convert options to JObject
-            JObject inputOptionsJObj = JObject.FromObject(inputOptionsDict);
-            JObject outputOptionsJObj = JObject.FromObject(outputOptionsDict);
-
-
-            // Create Settings
-            Settings.InputPlugin input = new Settings.InputPlugin()
-            {
-                Name = i,
-                Settings = inputOptionsJObj,
-                OutputPlugins = new List<Settings.OutputPlugin>
-                {
-                    new Settings.OutputPlugin
-                    {
-                        Name = o,
-                        Settings = outputOptionsJObj
-                    }
-                }
-            };
-            
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
 
-            // Load plugins after parse options
-            List<PluginDefinition> pluginList = Agent.LoadPlugins();
-
-            PluginDefinition inputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == input.Name.ToLower()).First();
-            IInputPlugin inputPlugin = Activator.CreateInstance(inputPluginMetadata.ImplementationType) as IInputPlugin;
-            string inputResult = inputPlugin.Execute(input.Settings);
-
-            foreach (Settings.OutputPlugin output in input.OutputPlugins)
+            // Create Settings
+            Models.InputPlugin input = new Models.InputPlugin()
             {
-                PluginDefinition outputPluginMetadata = pluginList.Where(t => ((PluginAttribute)t.Attribute).PluginName.ToLower() == output.Name.ToLower()).First();
+                Name = i,
+                Settings = JObject.FromObject(inputOptionsDict),
+                Instance = (IInputPlugin)Agent.GetPluginInstance(i)
+            };
 
-                IOutputPlugin outputPlugin = Activator.CreateInstance(outputPluginMetadata.ImplementationType) as IOutputPlugin;
-            
-                outputPlugin.Execute(inputResult, output.Settings);
-            }
+            Models.OutputPlugin output = new Models.OutputPlugin()
+            {
+                Name = i,
+                Settings = JObject.FromObject(outputOptionsDict),
+                Instance = (IOutputPlugin)Agent.GetPluginInstance(o)
+            };
+
+            // Load plugins after parse options
+            //List<PluginDefinition> pluginList = Agent.LoadPlugins();
+            string inputResult = input.Instance.Execute(input.Settings);
+
+            output.Instance.Execute(inputResult, output.Settings);
         }
-
     }
 }

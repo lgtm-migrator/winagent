@@ -2,6 +2,8 @@
 using Newtonsoft.Json.Linq;
 using System.Collections.Generic;
 
+using plugin;
+
 namespace Winagent.Settings
 {
     public class InputPlugin

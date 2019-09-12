@@ -1,6 +1,8 @@
 ﻿using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+using plugin;
+
 namespace Winagent.Settings
 {
     public class OutputPlugin

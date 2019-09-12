@@ -7,7 +7,7 @@ using Newtonsoft.Json.Linq;
 
 using plugin;
 
-namespace winagent.Models
+namespace Winagent.Models
 {
     class Task
     {
@@ -31,7 +31,7 @@ namespace winagent.Models
 
         public void Execute()
         {
-            OutputPlugin.Plugin.Execute(InputPlugin.Plugin.Execute(InputOptions), OutputOptions);
+            OutputPlugin.Instance.Execute(InputPlugin.Instance.Execute(InputOptions), OutputOptions);
         }
     }
 }

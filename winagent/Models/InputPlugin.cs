@@ -2,20 +2,14 @@
 
 using plugin;
 
-namespace winagent.Models
+namespace Winagent.Models
 {
     class InputPlugin
     {
-        public string Name { get; }
+        public string Name { get; set; }
 
-        public IInputPlugin Plugin { get; }
+        public IInputPlugin Instance { get; set; }
 
         public JObject Settings { get; set; }
-
-        public InputPlugin(string name, IInputPlugin plugin)
-        {
-            Name = name;
-            Plugin = plugin;
-        }
     }
 }

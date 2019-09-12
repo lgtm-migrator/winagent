@@ -75,13 +75,13 @@ namespace Winagent.MessageHandling
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
         /// <param name="exception"></param>
-        private static void HandleMessage(string message, int eventId, EventLogEntryType type, Exception exception)
+        private static void HandleMessage(string message, int eventId, EventLogEntryType type, Exception innerException)
         {
             if (Environment.UserInteractive)
             {
                 Console.Error.WriteLine(String.Format("EventID: {0}", eventId));
                 Console.Error.WriteLine(message);
-                Console.Error.WriteLine(exception.Message);
+                Console.Error.WriteLine(innerException.Message);
 
 #if DEBUG
                 Console.WriteLine("----------");
@@ -93,13 +93,13 @@ namespace Winagent.MessageHandling
             {
                 StringBuilder logMessage = new StringBuilder(message);
                 logMessage.Append(Environment.NewLine);
-                logMessage.Append(exception.Message);
+                logMessage.Append(innerException.Message);
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append("----------");
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append("DEBUG INFO");
-                logMessage.Append(exception);
+                logMessage.Append(innerException);
 
                 CreateLog(message.ToString(), type, eventId);
             }
