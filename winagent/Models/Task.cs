@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 
@@ -18,6 +19,8 @@ namespace Winagent.Models
         public JObject InputOptions { get; }
 
         public JObject OutputOptions { get; }
+
+        public Timer Timer { get; set; }
 
         public object Locker { get; set; } = new object();
 

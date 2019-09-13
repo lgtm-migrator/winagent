@@ -11,6 +11,7 @@ using plugin;
 using Winagent.Settings;
 using Winagent.MessageHandling;
 using Winagent.Models;
+using System.ComponentModel;
 
 // TODO: Create constants for all the config stuff
 
@@ -104,6 +105,9 @@ namespace Winagent
                         // Create Timer to schedule the task
                         Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
 
+                        // Put a reference to the timer in the task, so it can be managed from inside the callback
+                        task.Timer = timer;
+
                         // Save reference to avoid GC
                         timersReference.Add(timer);
                     }
@@ -147,11 +151,12 @@ namespace Winagent
                 throw;
             }
         }
-        
+
         /// <summary>
-        /// Executes a task
+        /// Executes a task if it is not already being executed
         /// </summary>
         /// <param name="state"></param>
+        /// <exception cref="WarningException">Internal plugin exception</exception>
         /// <exception cref="Exception">General error during plugin execution</exception>
         internal static void ExecuteTask(object state)
         {
@@ -159,7 +164,10 @@ namespace Winagent
 
             try
             {
+                // Try to get the lock
                 Monitor.TryEnter(((Task)state).Locker, ref hasLock);
+
+                // If the task lock could not be obtained, then the previous execution has not finished yet
                 if (!hasLock)
                 {
                     // EventID 13 => Plugin execution overlapping
@@ -167,8 +175,14 @@ namespace Winagent
                     return;
                 }
 
+                // Run the task
                 ((Task)state).Execute();
-
+            }
+            catch (WarningException we)
+            {
+                // EventID 14 => Internal plugin exception
+                MessageHandler.HandleWarning(String.Format("The following task will no longer be executed: [{0} → {1}]", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
+                ((Task)state).Timer.Dispose();
             }
             catch (Exception e)
             {
@@ -180,6 +194,7 @@ namespace Winagent
             {
                 if (hasLock)
                 {
+                    // Release task lock
                     Monitor.Exit(((Task)state).Locker);
                 }
             }
