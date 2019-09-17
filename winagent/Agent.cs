@@ -217,7 +217,7 @@ namespace Winagent
                 var eventdetail = e.Entry;
                 var log = new Models.Log()
                 {
-                    Date = eventdetail.TimeGenerated.ToUniversalTime(),
+                    Date = DateTime.Now.ToUniversalTime(),
                     Description = eventdetail.Message,
                     Id = eventdetail.InstanceId,
                     Severity = eventdetail.EntryType.ToString(),
