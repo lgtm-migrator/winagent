@@ -49,21 +49,21 @@ namespace Winagent
             catch (FileNotFoundException fnfe)
             {
                 // EventID 6 => Config file not found
-                MessageHandler.HandleError(String.Format("The specified path \"{0}\" does not appear to be valid", path), 6, fnfe);
+                MessageHandler.HandleError(String.Format("The specified path \"{0}\" does not appear to be valid.", path), 6, fnfe);
 
                 throw;
             }
             catch (Newtonsoft.Json.JsonSerializationException jse)
             {
                 // EventID 7 => Error in config file
-                MessageHandler.HandleError("The agent could not parse the config file, please check the syntax", 7, jse);
+                MessageHandler.HandleError("The agent could not parse the config file, please check the syntax.", 7, jse);
 
                 throw;
             }
             catch (Exception e)
             {
                 // EventID 8 => Error while parsing the config file
-                MessageHandler.HandleError("An undefined error occurred while parsing the config file", 8, e);
+                MessageHandler.HandleError("An undefined error occurred while parsing the config file.", 8, e);
 
                 throw;
             }
@@ -115,7 +115,7 @@ namespace Winagent
                 catch (InvalidOperationException ioe)
                 {
                     // EventID 4 => There are no plugins to execute
-                    MessageHandler.HandleError(String.Format("The specified plugin does not exist in the \"plugins\" directory"), 4, ioe);
+                    MessageHandler.HandleError(String.Format("The specified plugin does not exist in the \"plugins\" directory."), 4, ioe);
 
                     throw;
                 }
@@ -171,7 +171,7 @@ namespace Winagent
                 if (!hasLock)
                 {
                     // EventID 13 => Plugin execution overlapping
-                    MessageHandler.HandleWarning(String.Format("The execution of [{0} → {1}] was skipped because it is still running in a different thread", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 13);
+                    MessageHandler.HandleWarning(String.Format("The execution of [{0} → {1}] was skipped because a previous task is still running.", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 13);
                     return;
                 }
 
@@ -181,13 +181,13 @@ namespace Winagent
             catch (WarningException we)
             {
                 // EventID 14 => Internal plugin exception
-                MessageHandler.HandleWarning(String.Format("The following task will no longer be executed: [{0} → {1}]", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
+                MessageHandler.HandleWarning(String.Format("The following task will no longer be executed: [{0} → {1}].", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
                 ((Task)state).Timer.Dispose();
             }
             catch (Exception e)
             {
                 // EventID 5 => Error executing plugin
-                MessageHandler.HandleError(String.Format("An error ocurred while executing a plugin: [{0} → {1}]", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 5, e);
+                MessageHandler.HandleError(String.Format("An error ocurred while executing a plugin: [{0} → {1}].", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 5, e);
                 throw;
             }
             finally
@@ -217,6 +217,7 @@ namespace Winagent
                 var eventdetail = e.Entry;
                 var log = new Models.Log()
                 {
+                    // Using datetime instead of eventdetail.TimeGenerated.ToUniversalTime() since it seems to be getting wrong dates
                     Date = DateTime.Now.ToUniversalTime(),
                     Description = eventdetail.Message,
                     Id = eventdetail.InstanceId,
@@ -238,7 +239,7 @@ namespace Winagent
             catch (Exception ex)
             {
                 // EventID 11 => An error occurred while hadling an event
-                MessageHandler.HandleError("An error occurred while hadling an Event", 11, ex);
+                MessageHandler.HandleError("An error occurred while hadling an Event.", 11, ex);
             }
         }
 

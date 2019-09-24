@@ -40,7 +40,7 @@ namespace Winagent
             {
                 // Execute with config
                 CLI.ExecuteConfig(options.ConfigFile);
-                Console.Error.WriteLine("Press any key to exit");
+                Console.Error.WriteLine("Press any key to exit.");
                 Console.ReadKey();
             }
             else
