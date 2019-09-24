@@ -181,8 +181,18 @@ namespace Winagent
             catch (WarningException we)
             {
                 // EventID 14 => Internal plugin exception
-                MessageHandler.HandleWarning(String.Format("The following task will no longer be executed: [{0} → {1}].", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
-                ((Task)state).Timer.Dispose();
+                switch (we.Data["continue"])
+                {
+                    case false:
+                        MessageHandler.HandleWarning(String.Format("The following task will no longer be executed: [{0} → {1}].", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
+                        ((Task)state).Timer.Dispose();
+                        break;
+
+                    case true:
+                    default:
+                        MessageHandler.HandleWarning(String.Format("The following task has been skipped: [{0} → {1}].", ((Task)state).InputPlugin.Name, ((Task)state).OutputPlugin.Name), 14, we);
+                        break;
+                }
             }
             catch (Exception e)
             {

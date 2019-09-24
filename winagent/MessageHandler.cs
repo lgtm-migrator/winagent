@@ -86,7 +86,7 @@ namespace Winagent.MessageHandling
 #if DEBUG
                 Console.WriteLine("----------");
                 Console.WriteLine("DEBUG INFO");
-                Console.WriteLine(exception.ToString());
+                Console.WriteLine(innerException.ToString());
 #endif
             }
             else
