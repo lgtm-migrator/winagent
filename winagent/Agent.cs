@@ -12,6 +12,7 @@ using Winagent.Settings;
 using Winagent.MessageHandling;
 using Winagent.Models;
 using System.ComponentModel;
+using System.Text;
 
 // TODO: Create constants for all the config stuff
 
@@ -69,6 +70,37 @@ namespace Winagent
             }
         }
 
+
+
+        // Get instace of the plugin
+        internal static object GetPluginInstance(string name)
+        {
+            try
+            {
+                // Load plugin assembly
+                Assembly assembly = Assembly.LoadFrom(String.Format("plugins/{0}.dll", name));
+
+                // Load the class that is implementing a custom attribute in the assembly
+                // "I<plugin>" / "O<plugin>"
+                // TODO: Null pointer exception if there is no attribute
+                Type typeImplementingAttribute = (from type in assembly.GetTypes()
+                                                  where type.IsDefined(typeof(PluginAttribute), false)
+                                                  select type).FirstOrDefault();
+                // Return 
+                return Activator.CreateInstance(typeImplementingAttribute);
+            }
+            catch (BadImageFormatException bie)
+            {
+                // TODO: Check when is this exception thrown
+                throw;
+            }
+            catch (Exception e)
+            {
+                throw;
+            }
+        }
+
+
         /// <summary>
         /// Schedule tasks defined in the config file
         /// </summary>
@@ -90,6 +122,7 @@ namespace Winagent
                         Instance = (IInputPlugin)GetPluginInstance(input.Name)
                     };
 
+
                     foreach (Settings.OutputPlugin output in input.OutputPlugins)
                     {
                         var outputPlugin = new Winagent.Models.OutputPlugin()
@@ -101,6 +134,10 @@ namespace Winagent
 
                         // Create task with the input and output plugins to be run by the Timer
                         Task task = new Task(inputPlugin, outputPlugin);
+
+                        // Set event handler for the messages received from this plugins
+                        inputPlugin.Instance.MessageEvent += new EventHandler<MessageEventArgs>((sender, eventArgs) => OnMessageEvent(sender, eventArgs, task));
+                        outputPlugin.Instance.MessageEvent += new EventHandler<MessageEventArgs>((sender, eventArgs) => OnMessageEvent(sender, eventArgs, task));
 
                         // Create Timer to schedule the task
                         Timer timer = new Timer(new TimerCallback(ExecuteTask), task, 0, output.Schedule.GetTime());
@@ -123,34 +160,17 @@ namespace Winagent
             }
         }
 
-        // Get instace of the plugin
-        internal static object GetPluginInstance(string name)
+        private static void OnMessageEvent(object sender, MessageEventArgs eventArgs, Task task)
         {
-            try
-            {
-                // Load plugin assembly
-                Assembly assembly = Assembly.LoadFrom(String.Format("plugins/{0}.dll", name));
+            StringBuilder logMessage = new StringBuilder(String.Format("Thread: [{0} → {1}].", task.InputPlugin.Name, task.OutputPlugin.Name));
+            logMessage.Append(Environment.NewLine);
+            logMessage.Append(String.Format("Source: {0}.", sender.ToString()));
+            logMessage.Append(Environment.NewLine);
+            logMessage.Append(String.Format("Message: {0}.", eventArgs.Message));
 
-                // Load the class that is implementing a custom attribute in the assembly
-                // "I<plugin>" / "O<plugin>"
-                // TODO: Null pointer exception if there is no attribute
-                Type typeImplementingAttribute = (from type in assembly.GetTypes()
-                                                 where type.IsDefined(typeof(PluginAttribute), false)
-                                                 select type).FirstOrDefault();
-
-                // Return 
-                return Activator.CreateInstance(typeImplementingAttribute);
-            }
-            catch (BadImageFormatException bie)
-            {
-                // TODO: Check when is this exception thrown
-                throw;
-            }
-            catch (Exception e)
-            {
-                throw;
-            }
+            MessageHandler.HandleMessage(logMessage.ToString(), 0, eventArgs.Type, eventArgs.Exception);
         }
+
 
         /// <summary>
         /// Executes a task if it is not already being executed
@@ -210,6 +230,7 @@ namespace Winagent
             }
         }
 
+
         internal static void SetEventReaders(List<Settings.EventLog> eventLogs)
         {
             foreach(Settings.EventLog eventLog in eventLogs)
@@ -252,7 +273,5 @@ namespace Winagent
                 MessageHandler.HandleError("An error occurred while hadling an Event.", 11, ex);
             }
         }
-
-
     }
 }

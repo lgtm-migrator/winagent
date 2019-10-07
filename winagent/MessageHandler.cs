@@ -75,19 +75,19 @@ namespace Winagent.MessageHandling
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
         /// <param name="exception"></param>
-        private static void HandleMessage(string message, int eventId, EventLogEntryType type, Exception innerException)
+        public static void HandleMessage(string message, int eventId, EventLogEntryType type, Exception innerException)
         {
             if (Environment.UserInteractive)
             {
                 Console.Error.WriteLine(String.Format("EventID: {0}", eventId));
                 Console.Error.WriteLine(message);
                 Console.Error.WriteLine(innerException.Message);
+                Console.WriteLine();
+                Console.WriteLine();
 
-#if DEBUG
                 Console.WriteLine("----------");
                 Console.WriteLine("DEBUG INFO");
                 Console.WriteLine(innerException.ToString());
-#endif
             }
             else
             {
@@ -96,6 +96,7 @@ namespace Winagent.MessageHandling
                 logMessage.Append(innerException.Message);
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append(Environment.NewLine);
+
                 logMessage.Append("----------------------");
                 logMessage.Append(Environment.NewLine);
                 logMessage.Append("DEBUG INFO:");
@@ -111,19 +112,16 @@ namespace Winagent.MessageHandling
         /// </summary>
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
-        private static void HandleMessage(string errorMessage, int eventId, EventLogEntryType type)
+        public static void HandleMessage(string message, int eventId, EventLogEntryType type)
         {
             if (Environment.UserInteractive)
             {
                 Console.Error.WriteLine(String.Format("EventID: {0}", eventId));
-                Console.Error.WriteLine(errorMessage);
+                Console.Error.WriteLine(message);
             }
             else
             {
-                StringBuilder message = new StringBuilder(errorMessage);
-                message.Append(Environment.NewLine);
-
-                CreateLog(message.ToString(), type, eventId);
+                CreateLog(message, type, eventId);
             }
         }
 
