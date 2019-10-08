@@ -243,9 +243,10 @@ namespace Winagent
 
         private static void OnEntryWritten(object sender, EntryWrittenEventArgs e, Settings.EventLog settings)
         {
+            var eventdetail = e.Entry;
+
             try
             {
-                var eventdetail = e.Entry;
                 var log = new Models.Log()
                 {
                     // Using datetime instead of eventdetail.TimeGenerated.ToUniversalTime() since it seems to be getting wrong dates
@@ -260,17 +261,35 @@ namespace Winagent
 
                 foreach (Settings.OutputPlugin output in settings.OutputPlugins)
                 {
-                    // TODO: Do not load de assembly in each execution
-                    var outputInstance = (IOutputPlugin)GetPluginInstance(output.Name);
+                    // Send it through each plugin
+                    try
+                    {
+                        // TODO: Do not load the assembly in each execution
+                        var outputInstance = (IOutputPlugin)GetPluginInstance(output.Name);
 
-                    // TODO: Specific exception for the output plugin
-                    outputInstance.Execute(JsonConvert.SerializeObject(log), output.Settings);
+                        // TODO: Specify exception for the output plugin
+                        outputInstance.Execute(JsonConvert.SerializeObject(log), output.Settings);
+                    }
+                    catch (Exception ex)
+                    {
+                        CreateMessage(ex);
+                    }
                 }
             }
             catch (Exception ex)
             {
-                // EventID 11 => An error occurred while hadling an event
-                MessageHandler.HandleError("An error occurred while hadling an Event.", 11, ex);
+                CreateMessage(ex);
+            }
+
+            // Create an error message if it comes from a different event
+            void CreateMessage(Exception ex)
+            {
+                // Break the loop of event reports
+                if (!eventdetail.Source.Equals("Winagent") || eventdetail.InstanceId != 11)
+                {
+                    // EventID 11 => An error occurred while hadling an event
+                    MessageHandler.HandleError("An error occurred while hadling an Event.", 11, ex);
+                }
             }
         }
     }
