@@ -14,12 +14,14 @@ using Winagent.Models;
 using System.ComponentModel;
 using System.Text;
 
-// TODO: Create constants for all the config stuff
 
 namespace Winagent
 {
     class Agent
     {
+        private const string ConfigFile = @"config.json";
+
+
         /// <summary>
         /// List of timers to keep a reference of each task
         /// Avoid the timers to be garbage collected
@@ -40,11 +42,11 @@ namespace Winagent
         /// <exception cref="FileNotFoundException">Thrown when the config file could not be found</exception>
         /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the content of the config file is incorrect</exception>
         /// <exception cref="Exception">Thrown when a different error occurs</exception>
-        internal static Settings.Agent GetSettings(string path = @"config.json")
+        internal static Settings.Agent GetSettings(string path = ConfigFile)
         {
             try
             {
-                // Content of the configuration file "config.json"
+                // Content of the configuration file
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<Settings.Agent>(File.ReadAllText(path));
             }
             catch (FileNotFoundException fnfe)
@@ -89,13 +91,16 @@ namespace Winagent
                 // Return 
                 return Activator.CreateInstance(typeImplementingAttribute);
             }
-            catch (BadImageFormatException bie)
+            catch (BadImageFormatException)
             {
-                // TODO: Check when is this exception thrown
+                // EventID 15 => Error while parsing the config file
+                MessageHandler.HandleError("The plugin could not be loaded.", 15);
+
                 throw;
             }
-            catch (Exception e)
+            catch (Exception)
             {
+                // Fail on any not-controlled error
                 throw;
             }
         }

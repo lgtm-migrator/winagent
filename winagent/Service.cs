@@ -15,6 +15,8 @@ namespace Winagent
 {
     class Service : ServiceBase
     {
+        private const string Updater = @"winagent-updater.exe";
+
         public Service()
         {
             ServiceName = "Winagent";
@@ -56,28 +58,38 @@ namespace Winagent
         /// <summary>
         /// Execute updater
         /// </summary>
-        /// TODO: ↓
-        /// <param name="state">Object to run the timer</param>
+        /// <param name="state">State object passed to the timer</param>
+        /// <exception cref="UpdaterNotFoundException">Thrown when the executable of the updater does not exist</exception>
         /// <exception cref="Exception">General exception when the updater is executed</exception>
         internal static void RunUpdater(object state)
         {
             try
             {
+                var tmpLocation = @".\tmp\" + Updater;
+
                 // If there is a new version of the updater in .\tmp\ copy it
-                if (File.Exists(@".\tmp\winagent-updater.exe"))
+                if (File.Exists(tmpLocation))
                 {
-                    File.Copy(@".\tmp\winagent-updater.exe", @".\winagent-updater.exe", true);
-                    File.Delete(@".\tmp\winagent-updater.exe");
+                    File.Copy(tmpLocation, Updater, true);
+                    File.Delete(tmpLocation);
 
                     // EventID 3 => Application updated
-                    MessageHandler.HandleInformation(String.Format("Application updated: \"{0}\".", "winagent-updater.exe"), 3);
+                    MessageHandler.HandleInformation(String.Format("Application updated: \"{0}\".", Updater), 3);
                 }
-                Process.Start(@"winagent-updater.exe");
+
+                if (File.Exists(Updater))
+                {
+                    Process.Start(Updater);
+                }
+                else
+                {
+                    throw new Exceptions.UpdaterNotFoundException("Could not find the updater.");
+                }
             }
-            catch (System.ComponentModel.Win32Exception w32e)
+            catch (Exceptions.UpdaterNotFoundException unfe)
             {
                 // EventID 12 => Could not find the updater executable
-                MessageHandler.HandleError("Could not find the updater.", 12, w32e);
+                MessageHandler.HandleError("An error ocurred while executing the updater.", 12, unfe);
             }
             catch (Exception e)
             {
