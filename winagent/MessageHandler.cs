@@ -7,7 +7,7 @@ namespace Winagent.MessageHandling
     public static class MessageHandler
     {
         /// <summary>
-        /// 
+        /// A simple wrapper for error messages including exception information.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -18,7 +18,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// A simple wrapper for error messages.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -28,7 +28,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// A simple wrapper for warning messages including exception information.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -39,7 +39,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// A simple wrapper for warning messages.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -49,7 +49,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// A simple wrapper for information messages including exception information.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -60,7 +60,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// A simple wrapper for information messages.
         /// </summary>
         /// <param name="message"></param>
         /// <param name="eventId"></param>
@@ -70,7 +70,8 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// Prints the information or creates an EventLog with it, depending on whether the environment is interactive or not.
+        /// Includes information about the inner exception.
         /// </summary>
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
@@ -108,7 +109,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// Prints the information or creates an EventLog with it, depending on whether the environment is interactive or not.
         /// </summary>
         /// <param name="errorMessage"></param>
         /// <param name="errorCode"></param>
@@ -126,7 +127,7 @@ namespace Winagent.MessageHandling
         }
 
         /// <summary>
-        /// 
+        /// Creates an EventLog with the information received
         /// </summary>
         /// <param name="message"></param>
         /// <param name="entryType"></param>
