@@ -15,11 +15,12 @@ namespace Winagent
 {
     class Service : ServiceBase
     {
+        private const string AgentName = "Winagent";
         private const string Updater = @"winagent-updater.exe";
 
         public Service()
         {
-            ServiceName = "Winagent";
+            ServiceName = AgentName;
 
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);

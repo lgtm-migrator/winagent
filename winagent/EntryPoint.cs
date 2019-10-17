@@ -54,27 +54,27 @@ namespace Winagent
         {
             if (options.Install)
             {
-                ServiceManager.Install();
+                ServiceManager.Setup(ServiceManager.SetupOperation.Install);
             }
             else if (options.Uninstall)
             {
-                ServiceManager.Uninstall();
+                ServiceManager.Setup(ServiceManager.SetupOperation.Uninstall);
             }
             else if (options.Start)
             {
-                ServiceManager.Start();
+                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Start);
             }
             else if (options.Stop)
             {
-                ServiceManager.Stop();
+                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Stop);
             }
             else if (options.Restart)
             {
-                ServiceManager.Restart();
+                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Restart);
             }
             else if (options.Status)
             {
-                ServiceManager.Status();
+                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Status);
             }
         }
     }

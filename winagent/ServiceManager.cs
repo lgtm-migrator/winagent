@@ -3,11 +3,26 @@ using System.ServiceProcess;
 using System.Configuration.Install;
 using System.Collections;
 using System.ComponentModel;
+using Winagent.MessageHandling;
 
 namespace Winagent
 {
     class ServiceManager
     {
+        public enum SetupOperation
+        {
+            Install,
+            Uninstall
+        }
+
+        public enum ServiceOperation
+        {
+            Start,
+            Stop,
+            Restart,
+            Status
+        }
+
         // Get Installer instance
         public static AssemblyInstaller GetInstaller()
         {
@@ -15,159 +30,137 @@ namespace Winagent
             {
                 UseNewContext = true
             };
+
             return installer;
         }
 
-        // Install the service if it's not installed
-        public static void Install()
+        public static void Setup(SetupOperation operation)
         {
+            AssemblyInstaller installer = GetInstaller();
             try
             {
-                using (AssemblyInstaller installer = GetInstaller())
+                IDictionary state = new Hashtable();
+                switch (operation)
                 {
-                    IDictionary state = new Hashtable();
-                    try
-                    {
-                        installer.Install(state);
-                        installer.Commit(state);
-                    }
-                    catch
-                    {
+                    case SetupOperation.Install:
                         try
+                        {
+                            installer.Install(state);
+                            installer.Commit(state);
+                        }
+                        catch
                         {
                             installer.Rollback(state);
                         }
-                        catch(Exception)
-                        {
-                            // Since AssemblyInstaller prints the error message, just exit
-                            Console.Error.WriteLine();
-                            Console.Write("Exiting...");
-                            Console.Error.WriteLine();
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.Write(ex);
+                        break;
 
-                Console.Error.WriteLine(ex.Message);
-            }
-        }
-
-        // Uninstall the service if it's installed
-        public static void Uninstall()
-        {
-            try
-            {
-                using (AssemblyInstaller installer = GetInstaller())
-                {
-                    IDictionary state = new Hashtable();
-                    try
-                    {
+                    case SetupOperation.Uninstall:
                         installer.Uninstall(state);
-                    }
-                    catch (Exception)
+                        break;
+                }
+            }
+            catch (InstallException ie)
+            {
+                MessageHandler.HandleError("An error occurred while setting up the system", 0, ie);
+            }
+            catch (System.Security.SecurityException se)
+            {
+                MessageHandler.HandleError("Administrator permissions are required to set up the service", 0, se);
+            }
+            catch (Exception e)
+            {
+                MessageHandler.HandleError("An unknown error occurred while setting up the service", 0, e);
+            }
+            finally
+            {
+                if (installer != null)
+                {
+                    installer.Dispose();
+                }
+            }
+        }
+
+        public static void ExecuteOperation(ServiceOperation operation)
+        {
+            ServiceController controller = new ServiceController("Winagent");
+            try
+            {
+                switch (operation)
+                {
+                    case ServiceOperation.Start:
+                        if (!CheckServiceStopped())
+                        {
+                            throw new Exceptions.ServiceAlreadyRunningException("The service is already running");
+                        }
+                        else
+                        {
+                            controller.Start();
+                            controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
+                        }
+                        break;
+
+                    case ServiceOperation.Stop:
+                        if (CheckServiceStopped())
+                        {
+                            throw new Exceptions.ServiceNotRunningException("The service is already stopped");
+                        }
+                        else
+                        {
+                            controller.Stop();
+                            controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
+                        }
+                        break;
+
+                    case ServiceOperation.Restart:
+                        if (CheckServiceStopped())
+                        {
+                            throw new Exceptions.ServiceNotRunningException("The service is not running");
+                        }
+                        else
+                        {
+                            controller.Stop();
+                            controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
+
+                            controller.Start();
+                            controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
+                        }
+                        break;
+
+                    case ServiceOperation.Status:
+                        MessageHandler.HandleInformation(String.Format("{0} is {1}", controller.ServiceName, controller.Status), 0);
+                        break;
+                }
+
+                bool CheckServiceStopped()
+                {
+                    if (controller.Status == ServiceControllerStatus.Stopped)
                     {
-                        // Since AssemblyInstaller prints the error message, just exit
-                        Console.Error.WriteLine();
-                        Console.Write("Exiting...");
-                        Console.Error.WriteLine();
+                        return true;
+                    }
+                    else
+                    {
+                        return false;
                     }
                 }
             }
-            
-            
-            catch (Exception ex)
+            catch (Exceptions.ServiceNotRunningException snre)
             {
-                Console.Write(ex);
-
-                Console.Error.WriteLine(ex.Message);
+                MessageHandler.HandleError(snre.Message, 0);
             }
-        }
-
-        public static void Start()
-        {
-            try
+            catch (Exceptions.ServiceAlreadyRunningException sare)
             {
-                ServiceController controller = new ServiceController("Winagent");
-
-                controller.Start();
-                controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
+                MessageHandler.HandleError(sare.Message, 0);
             }
-            catch (InvalidOperationException)
+            catch (Exception e)
             {
-                Console.WriteLine("Service already started or not installed");
-                Console.WriteLine("Exiting...");
+                MessageHandler.HandleError("An error occurred while handling the service", 0, e);
             }
-            catch (Exception ex)
+            finally
             {
-                Console.Write(ex);
-
-                Console.Error.WriteLine(ex.Message);
-            }
-        }
-
-        public static void Stop()
-        {
-            try
-            {
-                ServiceController controller = new ServiceController("Winagent");
-
-                controller.Stop();
-                controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
-            }
-            catch (InvalidOperationException)
-            {
-                Console.WriteLine("Service already stopped or not installed");
-                Console.WriteLine("Exiting...");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-
-                Console.Error.WriteLine(ex.Message);
-            }
-        }
-
-        public static void Restart()
-        {
-            try
-            {
-                ServiceController controller = new ServiceController("Winagent");
-
-                controller.Stop();
-                controller.WaitForStatus(ServiceControllerStatus.Stopped, TimeSpan.FromSeconds(25));
-
-                controller.Start();
-                controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
-            }
-            catch (InvalidOperationException)
-            {
-                Console.WriteLine("Service not running or not installed");
-                Console.WriteLine("Exiting...");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-
-                Console.Error.WriteLine(ex.Message);
-            }
-        }
-
-        public static void Status()
-        {
-            try
-            {
-                ServiceController controller = new ServiceController("Winagent");
-
-                Console.WriteLine("{0} is {1}", controller.ServiceName,controller.Status);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-
-                Console.Error.WriteLine(ex.Message);
+                if (controller!=null)
+                {
+                    controller.Dispose();
+                }
             }
         }
     }
