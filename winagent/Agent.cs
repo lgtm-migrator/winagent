@@ -127,7 +127,6 @@ namespace Winagent
                         Instance = (IInputPlugin)GetPluginInstance(input.Name)
                     };
 
-
                     foreach (Settings.OutputPlugin output in input.OutputPlugins)
                     {
                         var outputPlugin = new Winagent.Models.OutputPlugin()
@@ -235,7 +234,10 @@ namespace Winagent
             }
         }
 
-
+        /// <summary>
+        /// Sets the event readers for the EventLogs
+        /// </summary>
+        /// <param name="eventLogs">Settings defined for the event logs</param>
         internal static void SetEventReaders(List<Settings.EventLog> eventLogs)
         {
             foreach(Settings.EventLog eventLog in eventLogs)
@@ -246,6 +248,12 @@ namespace Winagent
             }
         }
 
+        /// <summary>
+        /// Sends the information through the output plugin when an entry is created
+        /// </summary>
+        /// <param name="sender">The object sendig the event</param>
+        /// <param name="e">Event arguments</param>
+        /// <param name="settings">Settings for the output plugin</param>
         private static void OnEntryWritten(object sender, EntryWrittenEventArgs e, Settings.EventLog settings)
         {
             var eventdetail = e.Entry;
