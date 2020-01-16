@@ -6,6 +6,7 @@ using System.Threading;
 using System.Linq;
 using System.Diagnostics;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 using plugin;
 using Winagent.Settings;
@@ -13,7 +14,6 @@ using Winagent.MessageHandling;
 using Winagent.Models;
 using System.ComponentModel;
 using System.Text;
-
 
 namespace Winagent
 {
@@ -47,7 +47,24 @@ namespace Winagent
             try
             {
                 // Content of the configuration file
-                return Newtonsoft.Json.JsonConvert.DeserializeObject<Settings.Agent>(File.ReadAllText(path));
+                var settings = JObject.Parse(File.ReadAllText(path));
+
+                IEnumerable<JToken> references = settings.SelectTokens("$..$var");
+                Console.WriteLine("Count: {0}", references.Count());
+
+                foreach (JToken reference in references)
+                {
+                    // Get values of the referenced variable
+                    JToken variable = settings.SelectToken(reference.ToString());
+
+                    // Merge variable values with the specified settings
+                    reference.Parent.Parent.Merge(variable);
+                }
+
+                Console.WriteLine(settings);
+
+                // Parsed settings
+                return settings.ToObject<Settings.Agent>();
             }
             catch (FileNotFoundException fnfe)
             {
