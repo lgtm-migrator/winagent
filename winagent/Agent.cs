@@ -12,6 +12,7 @@ using plugin;
 using Winagent.Settings;
 using Winagent.MessageHandling;
 using Winagent.Models;
+using Winagent.Exceptions;
 using System.ComponentModel;
 using System.Text;
 
@@ -49,22 +50,41 @@ namespace Winagent
                 // Content of the configuration file
                 var settings = JObject.Parse(File.ReadAllText(path));
 
-                IEnumerable<JToken> references = settings.SelectTokens("$..$var");
-                Console.WriteLine("Count: {0}", references.Count());
+                var references = settings.SelectTokens("$..[?(@ =~ /\\$\\..*/)]").ToList();
 
-                foreach (JToken reference in references)
+                foreach (JToken referencePath in references)
                 {
                     // Get values of the referenced variable
-                    JToken variable = settings.SelectToken(reference.ToString());
+                    JToken variableValue = settings.SelectToken(referencePath.ToString());
+
+                    if (variableValue is null)
+                    {
+                        throw new WrongJsonPathException(String.Format("Unable to resolve the specified JsonPath: {0}.", referencePath.Parent));
+                    }
 
                     // Merge variable values with the specified settings
-                    reference.Parent.Parent.Merge(variable);
-                }
+                    if (variableValue.GetType() == typeof(JValue))
+                    {
+                        referencePath.Replace(variableValue);
+                    }
+                    else
+                    {
+                        // Merge the variable value with the already specified
+                        MergeSettings(referencePath.Parent.Parent, variableValue.Children());
 
-                Console.WriteLine(settings);
+                        // Remove the variable reference
+                        referencePath.Parent.Remove();
+                    }
+                }
 
                 // Parsed settings
                 return settings.ToObject<Settings.Agent>();
+            }
+            catch (WrongJsonPathException wjpe)
+            {
+                MessageHandler.HandleError("The agent could not parse the config file, please check the syntax.", 7, wjpe);
+
+                throw;
             }
             catch (FileNotFoundException fnfe)
             {
@@ -87,11 +107,35 @@ namespace Winagent
 
                 throw;
             }
+
+
+            /// <summary>
+            /// Merge the settings inside the variable with the arleady existing ones
+            /// The existing ones will be prioritized
+            /// </summary>
+            /// <param name="settings">Object that contain settings and variable reference(s)</param>
+            /// <param name="variable">Content of the referenced variable that will be merged</param>
+            void MergeSettings(JContainer settings, JEnumerable<JToken> variable)
+            {
+                // Iterate through all the values contained in the variable
+                foreach (JProperty attribute in variable)
+                {
+                    // Check if some of the attributes (keys) already exist
+                    if (settings[attribute.Name] == null)
+                    {
+                        // If the attribute does not exists, set the one contained in the referenced variable
+                        settings.Add(attribute);
+                    }
+                }
+            }
         }
 
 
-
-        // Get instace of the plugin
+        /// <summary>
+        /// Load plugin and get an instance of it by its name
+        /// </summary>
+        /// <param name="name">Name of the plugin</param>
+        /// <returns>Instance of the plugin</returns>
         internal static object GetPluginInstance(string name)
         {
             try

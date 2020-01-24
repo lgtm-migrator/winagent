@@ -59,6 +59,7 @@
     <Compile Include="Exceptions\UpdaterNotFoundException.cs" />
     <Compile Include="Exceptions\ServiceNotRunningException.cs" />
     <Compile Include="Exceptions\ServiceAlreadyRunningException.cs" />
+    <Compile Include="Exceptions\WrongJsonPathException.cs" />
     <Compile Include="MessageHandler.cs" />
     <Compile Include="Exceptions\WrongPathException.cs" />
     <Compile Include="Models\OutputPlugin.cs" />
