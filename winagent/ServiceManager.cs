@@ -3,6 +3,8 @@ using System.ServiceProcess;
 using System.Configuration.Install;
 using System.Collections;
 using System.ComponentModel;
+using System.Reflection;
+
 using Winagent.MessageHandling;
 
 namespace Winagent
@@ -24,19 +26,26 @@ namespace Winagent
         }
 
         // Get Installer instance
-        public static AssemblyInstaller GetInstaller()
+        public static AssemblyInstaller GetInstaller(string[] args)
         {
-            AssemblyInstaller installer = new AssemblyInstaller(typeof(Service).Assembly, null)
+            var assebmlyLocation = Assembly.GetEntryAssembly().Location;
+
+            InstallContext installContext = new InstallContext();
+            installContext.Parameters["assemblypath"] = $"\"{assebmlyLocation}\" --config test";
+            installContext.Parameters["logfile"] = "winagent.install.log";
+
+            AssemblyInstaller installer = new AssemblyInstaller()
             {
-                UseNewContext = true
+                Context = installContext,
+                Path = assebmlyLocation
             };
 
             return installer;
         }
 
-        public static void Setup(SetupOperation operation)
+        public static void Setup(SetupOperation operation, string[] args)
         {
-            AssemblyInstaller installer = GetInstaller();
+            AssemblyInstaller installer = GetInstaller(args);
             try
             {
                 IDictionary state = new Hashtable();
@@ -51,6 +60,7 @@ namespace Winagent
                         catch
                         {
                             installer.Rollback(state);
+                            MessageHandler.HandleError("Error during the installation, it has been rolled back", 0);
                         }
                         break;
 
@@ -166,15 +176,6 @@ namespace Winagent
     }
 
     [RunInstaller(true)]
-    public sealed class WinagentInstallerProcess : ServiceProcessInstaller
-    {
-        public WinagentInstallerProcess()
-        {
-            this.Account = ServiceAccount.LocalSystem;
-        }
-    }
-
-    [RunInstaller(true)]
     public sealed class WinagentInstaller : ServiceInstaller
     {
         public WinagentInstaller()
@@ -182,7 +183,16 @@ namespace Winagent
             this.Description = "Windows Agent";
             this.DisplayName = "Winagent";
             this.ServiceName = "Winagent";
-            this.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
+            this.StartType = ServiceStartMode.Automatic;
+        }
+    }
+    
+    [RunInstaller(true)]
+    public sealed class WinagentInstallerProcess : ServiceProcessInstaller
+    {
+        public WinagentInstallerProcess()
+        {
+            this.Account = ServiceAccount.LocalSystem;
         }
     }
 

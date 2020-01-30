@@ -3,6 +3,7 @@ using CommandLine;
 using System.ServiceProcess;
 
 using Winagent.Options;
+using System.Linq;
 
 namespace Winagent
 {
@@ -24,7 +25,7 @@ namespace Winagent
             }
             else
             {
-                using (var service = new Service())
+                using (var service = new Service(args))
                 {
                     ServiceBase.Run(service);
                 }
@@ -54,11 +55,11 @@ namespace Winagent
         {
             if (options.Install)
             {
-                ServiceManager.Setup(ServiceManager.SetupOperation.Install);
+                ServiceManager.Setup(ServiceManager.SetupOperation.Install, options.Config.ToArray<string>());
             }
             else if (options.Uninstall)
             {
-                ServiceManager.Setup(ServiceManager.SetupOperation.Uninstall);
+                ServiceManager.Setup(ServiceManager.SetupOperation.Uninstall, null);
             }
             else if (options.Start)
             {

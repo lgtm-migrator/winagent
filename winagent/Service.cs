@@ -26,8 +26,21 @@ namespace Winagent
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
         }
 
+        public Service(string[] args)
+        {
+            ServiceName = AgentName;
+
+            // Set current directory as base directory
+            Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
+        }
+
         protected override void OnStart(string[] args)
         {
+            foreach (var x in args)
+            {
+                MessageHandler.HandleInformation($"arg: {x}", 0);
+            }
+
             try
             {
                 // Get application settings

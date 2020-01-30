@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using CommandLine;
 
 namespace Winagent.Options
@@ -25,5 +26,8 @@ namespace Winagent.Options
 
         [Option("status", SetName = "status", HelpText = "Check service status")]
         public Boolean Status { get; set; }
+
+        [Option("config", SetName = "install", HelpText = "Path to the configuration file that will be used by the service")]
+        public IEnumerable<string> Config { get; set; }
     }
 }
