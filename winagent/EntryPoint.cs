@@ -17,11 +17,11 @@ namespace Winagent
             {
                 // Parse CommandLine options
                 // https://github.com/commandlineparser/commandline
-                var options = Parser.Default.ParseArguments<CommandOptions, ServiceOptions>(args);
+                var options = Parser.Default.ParseArguments<CommandOptions, ManagementOptions>(args);
 
                 // Call the right method
                 options.WithParsed<CommandOptions>(opts => Command(opts));
-                options.WithParsed<ServiceOptions>(opts => Service(opts));
+                options.WithParsed<ManagementOptions>(opts => Service(opts));
             }
             else
             {
@@ -51,15 +51,21 @@ namespace Winagent
         }
 
         // Service management with parsed options
-        static void Service(ServiceOptions options)
+        static void Service(ManagementOptions options)
         {
             if (options.Install)
             {
-                ServiceManager.Setup(ServiceManager.SetupOperation.Install, options.Config.ToArray<string>());
+                ServiceManager.ExecuteOperation(
+                    ServiceManager.ServiceOperation.Install,
+                    new string[]
+                    {
+                        options.Config
+                    }
+                );
             }
             else if (options.Uninstall)
             {
-                ServiceManager.Setup(ServiceManager.SetupOperation.Uninstall, null);
+                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Uninstall);
             }
             else if (options.Start)
             {

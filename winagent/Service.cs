@@ -7,9 +7,10 @@ using System.ServiceProcess;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
+using CommandLine;
 using plugin;
 using Winagent.MessageHandling;
+using Winagent.Options;
 
 namespace Winagent
 {
@@ -36,6 +37,13 @@ namespace Winagent
 
         protected override void OnStart(string[] args)
         {
+            // TODO: This might be null
+            // Find a way to get it directly from the execution instead of the registry (Environment.GetCommandLineArgs)
+            if (args.Length == 0)
+            {
+                args = Environment.GetCommandLineArgs();
+            }
+
             foreach (var x in args)
             {
                 MessageHandler.HandleInformation($"arg: {x}", 0);
@@ -43,29 +51,39 @@ namespace Winagent
 
             try
             {
-                // Get application settings
-                Settings.Agent settings = Agent.GetSettings();
+                // Parse CommandLine options
+                // https://github.com/commandlineparser/commandline
+                var options = Parser.Default.ParseArguments<ServiceOptions>(args);
 
-                // Create envent handlers
-                Agent.SetEventReaders(settings.EventLogs);
-
-                // Create tasks
-                Agent.CreateTasks(settings.InputPlugins);
-
-                // Create detached autoupdater if autoupdates are enabled
-                if (settings.AutoUpdates.Enabled)
-                {
-                    // Run the updater after 1 minute
-                    // The timer will run every 10 mins
-                    Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, settings.AutoUpdates.Schedule.GetTime());
-                    // Save reference to avoid GC
-                    Agent.timersReference.Add(updaterTimer);
-                }
+                // Call the right method
+                options.WithParsed<ServiceOptions>(opts => Start(opts));
             }
             catch (Exception e)
             {
                 // EventID 1 => An error ocurred
                 MessageHandler.HandleError(String.Format("General error during service execution."), 1, e);
+            }
+        }
+
+        private void Start(ServiceOptions options)
+        {
+            // Get application settings
+            Settings.Agent settings = Agent.GetSettings(options.Config);
+
+            // Create envent handlers
+            Agent.SetEventReaders(settings.EventLogs);
+
+            // Create tasks
+            Agent.CreateTasks(settings.InputPlugins);
+
+            // Create detached autoupdater if autoupdates are enabled
+            if (settings.AutoUpdates.Enabled)
+            {
+                // Run the updater after 1 minute
+                // The timer will run every 10 mins
+                Timer updaterTimer = new Timer(new TimerCallback(RunUpdater), null, 60000, settings.AutoUpdates.Schedule.GetTime());
+                // Save reference to avoid GC
+                Agent.timersReference.Add(updaterTimer);
             }
         }
 

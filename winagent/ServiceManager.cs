@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Reflection;
 
 using Winagent.MessageHandling;
+using System.Linq;
 
 namespace Winagent
 {
@@ -19,6 +20,8 @@ namespace Winagent
 
         public enum ServiceOperation
         {
+            Install,
+            Uninstall,
             Start,
             Stop,
             Restart,
@@ -26,13 +29,16 @@ namespace Winagent
         }
 
         // Get Installer instance
-        public static AssemblyInstaller GetInstaller(string[] args)
+        public static AssemblyInstaller GetInstaller(string[] args = null)
         {
             var assebmlyLocation = Assembly.GetEntryAssembly().Location;
 
             InstallContext installContext = new InstallContext();
-            installContext.Parameters["assemblypath"] = $"\"{assebmlyLocation}\" --config test";
             installContext.Parameters["logfile"] = "winagent.install.log";
+            if(args != null)
+            {
+                installContext.Parameters["assemblypath"] = $"\"{assebmlyLocation}\" {string.Join(" ", args)}";
+            }
 
             AssemblyInstaller installer = new AssemblyInstaller()
             {
@@ -90,13 +96,35 @@ namespace Winagent
             }
         }
 
-        public static void ExecuteOperation(ServiceOperation operation)
+        public static void ExecuteOperation(ServiceOperation operation, string[] args = null)
         {
             ServiceController controller = new ServiceController("Winagent");
             try
             {
                 switch (operation)
                 {
+                    case ServiceOperation.Install:
+                        if (CheckServiceInstalled())
+                        {
+                            throw new Exceptions.ServiceAlreadyInstalledException("The service is already installed");
+                        }
+                        else
+                        {
+                            Setup(SetupOperation.Install, args);
+                        }
+                        break;
+
+                    case ServiceOperation.Uninstall:
+                        if (!CheckServiceInstalled())
+                        {
+                            throw new Exceptions.ServiceNotInstalledException("The service is not installed");
+                        }
+                        else
+                        {
+                            Setup(SetupOperation.Uninstall, args);
+                        }
+                        break;
+
                     case ServiceOperation.Start:
                         if (!CheckServiceStopped())
                         {
@@ -143,15 +171,26 @@ namespace Winagent
 
                 bool CheckServiceStopped()
                 {
-                    if (controller.Status == ServiceControllerStatus.Stopped)
+                    if (!CheckServiceInstalled())
                     {
-                        return true;
+                        throw new Exceptions.ServiceNotInstalledException("The service is not installed");
                     }
-                    else
-                    {
-                        return false;
-                    }
+
+                    return controller.Status == ServiceControllerStatus.Stopped;
                 }
+
+                bool CheckServiceInstalled()
+                {
+                    return ServiceController.GetServices().FirstOrDefault(s => s.ServiceName == "Winagent") != null;
+                }
+            }
+            catch (Exceptions.ServiceNotInstalledException snie)
+            {
+                MessageHandler.HandleError(snie.Message, 0);
+            }
+            catch (Exceptions.ServiceAlreadyInstalledException saie)
+            {
+                MessageHandler.HandleError(saie.Message, 0);
             }
             catch (Exceptions.ServiceNotRunningException snre)
             {
