@@ -4,6 +4,7 @@ using System.ServiceProcess;
 
 using Winagent.Options;
 using System.Linq;
+using System.Collections.Generic;
 
 namespace Winagent
 {
@@ -55,12 +56,14 @@ namespace Winagent
         {
             if (options.Install)
             {
+                var args = new List<string>
+                {
+                    options.Config
+                };
+
                 ServiceManager.ExecuteOperation(
                     ServiceManager.ServiceOperation.Install,
-                    new string[]
-                    {
-                        options.Config
-                    }
+                    args.Where(s => !string.IsNullOrEmpty(s)).ToArray()
                 );
             }
             else if (options.Uninstall)
@@ -69,7 +72,15 @@ namespace Winagent
             }
             else if (options.Start)
             {
-                ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Start);
+                var args = new List<string>
+                {
+                    options.Config
+                };
+
+                ServiceManager.ExecuteOperation(
+                    ServiceManager.ServiceOperation.Start,
+                    args.Where(s => !string.IsNullOrEmpty(s)).ToArray()
+                );
             }
             else if (options.Stop)
             {

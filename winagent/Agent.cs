@@ -20,7 +20,7 @@ namespace Winagent
 {
     class Agent
     {
-        private const string ConfigFile = @"config.json";
+        public const string DefaultConfigFile = @"config.json";
 
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace Winagent
         /// <exception cref="FileNotFoundException">Thrown when the config file could not be found</exception>
         /// <exception cref="Newtonsoft.Json.JsonSerializationException">Thrown when the content of the config file is incorrect</exception>
         /// <exception cref="Exception">Thrown when a different error occurs</exception>
-        internal static Settings.Agent GetSettings(string path = ConfigFile)
+        internal static Settings.Agent GetSettings(string path = DefaultConfigFile)
         {
             try
             {

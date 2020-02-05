@@ -28,74 +28,6 @@ namespace Winagent
             Status
         }
 
-        // Get Installer instance
-        public static AssemblyInstaller GetInstaller(string[] args = null)
-        {
-            var assebmlyLocation = Assembly.GetEntryAssembly().Location;
-
-            InstallContext installContext = new InstallContext();
-            installContext.Parameters["logfile"] = "winagent.install.log";
-            if(args != null)
-            {
-                installContext.Parameters["assemblypath"] = $"\"{assebmlyLocation}\" {string.Join(" ", args)}";
-            }
-
-            AssemblyInstaller installer = new AssemblyInstaller()
-            {
-                Context = installContext,
-                Path = assebmlyLocation
-            };
-
-            return installer;
-        }
-
-        public static void Setup(SetupOperation operation, string[] args)
-        {
-            AssemblyInstaller installer = GetInstaller(args);
-            try
-            {
-                IDictionary state = new Hashtable();
-                switch (operation)
-                {
-                    case SetupOperation.Install:
-                        try
-                        {
-                            installer.Install(state);
-                            installer.Commit(state);
-                        }
-                        catch
-                        {
-                            installer.Rollback(state);
-                            MessageHandler.HandleError("Error during the installation, it has been rolled back", 0);
-                        }
-                        break;
-
-                    case SetupOperation.Uninstall:
-                        installer.Uninstall(state);
-                        break;
-                }
-            }
-            catch (InstallException ie)
-            {
-                MessageHandler.HandleError("An error occurred while setting up the system", 0, ie);
-            }
-            catch (System.Security.SecurityException se)
-            {
-                MessageHandler.HandleError("Administrator permissions are required to set up the service", 0, se);
-            }
-            catch (Exception e)
-            {
-                MessageHandler.HandleError("An unknown error occurred while setting up the service", 0, e);
-            }
-            finally
-            {
-                if (installer != null)
-                {
-                    installer.Dispose();
-                }
-            }
-        }
-
         public static void ExecuteOperation(ServiceOperation operation, string[] args = null)
         {
             ServiceController controller = new ServiceController("Winagent");
@@ -132,7 +64,7 @@ namespace Winagent
                         }
                         else
                         {
-                            controller.Start();
+                            controller.Start(args);
                             controller.WaitForStatus(ServiceControllerStatus.Running, TimeSpan.FromSeconds(25));
                         }
                         break;
@@ -206,12 +138,88 @@ namespace Winagent
             }
             finally
             {
-                if (controller!=null)
+                if (controller != null)
                 {
                     controller.Dispose();
                 }
             }
         }
+
+        // Get Installer instance
+        public static AssemblyInstaller GetInstaller(string[] args)
+        {
+            var assebmlyLocation = Assembly.GetEntryAssembly().Location;
+
+            InstallContext installContext = new InstallContext();
+            installContext.Parameters["logfile"] = "winagent.install.log";
+
+            // Set assemblypath with or without arguments
+            if(args == null)
+            {
+                installContext.Parameters["assemblypath"] = assebmlyLocation;
+            }
+            else
+            {
+                installContext.Parameters["assemblypath"] = $"\"{assebmlyLocation}\" {string.Join(" ", args)}";
+            }
+
+            AssemblyInstaller installer = new AssemblyInstaller()
+            {
+                Context = installContext,
+                Path = assebmlyLocation
+            };
+
+            return installer;
+        }
+
+        public static void Setup(SetupOperation operation, string[] args)
+        {
+            AssemblyInstaller installer = GetInstaller(args);
+            try
+            {
+                IDictionary state = new Hashtable();
+                switch (operation)
+                {
+                    case SetupOperation.Install:
+                        try
+                        {
+                            installer.Install(state);
+                            installer.Commit(state);
+                        }
+                        catch(Exception e)
+                        {
+                            installer.Rollback(state);
+                            MessageHandler.HandleError("Error during the installation, it has been rolled back", 0, e);
+                        }
+                        break;
+
+                    case SetupOperation.Uninstall:
+                        installer.Uninstall(state);
+                        break;
+                }
+            }
+            catch (InstallException ie)
+            {
+                MessageHandler.HandleError("An error occurred while setting up the system", 0, ie);
+            }
+            catch (System.Security.SecurityException se)
+            {
+                MessageHandler.HandleError("Administrator permissions are required to set up the service", 0, se);
+            }
+            catch (Exception e)
+            {
+                MessageHandler.HandleError("An unknown error occurred while setting up the service", 0, e);
+            }
+            finally
+            {
+                if (installer != null)
+                {
+                    installer.Dispose();
+                }
+            }
+        }
+
+        
     }
 
     [RunInstaller(true)]

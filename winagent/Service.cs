@@ -18,6 +18,7 @@ namespace Winagent
     {
         private const string AgentName = "Winagent";
         private const string Updater = @"winagent-updater.exe";
+        private string[] serviceArgs;
 
         public Service()
         {
@@ -30,6 +31,7 @@ namespace Winagent
         public Service(string[] args)
         {
             ServiceName = AgentName;
+            serviceArgs = args;
 
             // Set current directory as base directory
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
@@ -37,16 +39,9 @@ namespace Winagent
 
         protected override void OnStart(string[] args)
         {
-            // TODO: This might be null
-            // Find a way to get it directly from the execution instead of the registry (Environment.GetCommandLineArgs)
-            if (args.Length == 0)
+            if (args.Length == 0 && serviceArgs != null)
             {
-                args = Environment.GetCommandLineArgs();
-            }
-
-            foreach (var x in args)
-            {
-                MessageHandler.HandleInformation($"arg: {x}", 0);
+                args = serviceArgs;
             }
 
             try

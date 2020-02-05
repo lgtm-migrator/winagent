@@ -8,7 +8,7 @@ namespace Winagent.Options
     {
         // Options
 
-        [Option("config", SetName = "configpath", HelpText = "Path to the configuration file that will be used by the service")]
+        [Option("config", SetName = "configpath", Default = Agent.DefaultConfigFile, HelpText = "Path to the configuration file that will be used by the service")]
         public string Config { get; set; }
     }
 }
