@@ -20,6 +20,9 @@ namespace Winagent
         private const string Updater = @"winagent-updater.exe";
         private string[] serviceArgs;
 
+        /// <summary>
+        /// Service constructor without arguments
+        /// </summary>
         public Service()
         {
             ServiceName = AgentName;
@@ -28,6 +31,10 @@ namespace Winagent
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
         }
 
+        /// <summary>
+        /// Service constructor with arguments
+        /// </summary>
+        /// <param name="args">Arguments used to execute the service comming from the installation "assemblypath"</param>
         public Service(string[] args)
         {
             ServiceName = AgentName;
@@ -37,6 +44,13 @@ namespace Winagent
             Directory.SetCurrentDirectory(AppDomain.CurrentDomain.BaseDirectory);
         }
 
+        /// <summary>
+        /// When implemented in a derived class, executes when a Start command is sent to
+        /// the service by the Service Control Manager (SCM) or when the operating system
+        /// starts (for a service that starts automatically). Specifies actions to take when
+        /// the service starts.
+        /// </summary>
+        /// <param name="args">Arguments specified during the service start</param>
         protected override void OnStart(string[] args)
         {
             if (args.Length == 0 && serviceArgs != null)
@@ -57,9 +71,14 @@ namespace Winagent
             {
                 // EventID 1 => An error ocurred
                 MessageHandler.HandleError(String.Format("General error during service execution."), 1, e);
+                throw;
             }
         }
 
+        /// <summary>
+        /// Executes the service logic occording to the specified options
+        /// </summary>
+        /// <param name="options">Parsed options</param>
         private void Start(ServiceOptions options)
         {
             // Get application settings
