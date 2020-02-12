@@ -97,7 +97,14 @@ namespace Winagent
                         break;
 
                     case ServiceOperation.Status:
-                        MessageHandler.HandleInformation(String.Format("{0} is {1}", controller.ServiceName, controller.Status), 0);
+                        if (!CheckServiceInstalled())
+                        {
+                            throw new Exceptions.ServiceNotInstalledException("The service is not installed");
+                        }
+                        else
+                        {
+                            MessageHandler.HandleInformation(String.Format("{0} is {1}", controller.ServiceName, controller.Status), 0);
+                        }
                         break;
                 }
 

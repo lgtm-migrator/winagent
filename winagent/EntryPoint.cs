@@ -50,7 +50,7 @@ namespace Winagent
                 CLI.ExecuteCommand(options.Input, options.Output, (string[])options.InputOptions, (string[])options.OutputOptions);
             }
         }
-
+        
         // Service management with parsed options
         static void Service(ManagementOptions options)
         {
@@ -63,7 +63,7 @@ namespace Winagent
 
                 ServiceManager.ExecuteOperation(
                     ServiceManager.ServiceOperation.Install,
-                    args.Where(s => !string.IsNullOrEmpty(s)).ToArray()
+                    optionsToArray(args)
                 );
             }
             else if (options.Uninstall)
@@ -79,7 +79,7 @@ namespace Winagent
 
                 ServiceManager.ExecuteOperation(
                     ServiceManager.ServiceOperation.Start,
-                    args.Where(s => !string.IsNullOrEmpty(s)).ToArray()
+                    optionsToArray(args)
                 );
             }
             else if (options.Stop)
@@ -93,6 +93,27 @@ namespace Winagent
             else if (options.Status)
             {
                 ServiceManager.ExecuteOperation(ServiceManager.ServiceOperation.Status);
+            }
+
+
+            /// <summary>
+            /// Splits all the option strings into separated arguments
+            /// as the service requires each argument as a separated element
+            /// string[1]{--config example.json} => string[2]{--config, example.json}
+            /// </summary>
+            /// <param name="args">List of options as strings</param>
+            /// <returns>Array of strings with separated arguments</returns>
+            string[] optionsToArray(List<string> args)
+            {
+                return args
+                    // Get non null elements
+                    .Where(s => !string.IsNullOrEmpty(s))
+                    // Split each string into string[]
+                    .Select(s => s.Split(' '))
+                    // Flatten the list of arrays
+                    .SelectMany(l => l)
+                    // Conver the list into a string array
+                    .ToArray();
             }
         }
     }
